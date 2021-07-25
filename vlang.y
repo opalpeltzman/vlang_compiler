@@ -14,15 +14,21 @@ int tcounter=0, ecounter=0;
 
 %}
 
-%union {int num; int* vec; char id;}         /* type of variables */
+%union {int num; int* vec;}         		 /* type of variables */
 %start line                                  /* Yacc definitions */
+%token ID
 %token print
+%token scl
+%token vec
 %token exit_command
-%token <id> identifier
 %token <num> number
 %type <num> line exp term 
-%type <id> assignment
 
+%right '='
+%left '+' '-'
+%left '*' '/'
+%left '.' ':'
+%left '()'
 
 %%
 
@@ -31,19 +37,19 @@ int tcounter=0, ecounter=0;
 line    : assignment ';'		{ecounter=tcounter=0;}
 		| exit_command ';'		{exit(EXIT_SUCCESS);}
 		| print exp ';'			{printf("\tprintf(\"%%d\\n\", e%d );\n", $2);}
+		| scl ID ';'			{;}
 		| line assignment ';'	{;}
 		| line print exp ';'	{printf("\tprintf(\"%%d\\n\", e%d );\n", $3);}
 		| line exit_command ';'	{exit(EXIT_SUCCESS);}
         ;
 
-assignment : identifier '=' exp  { printf("\t%c=e%d\n", $1,$3);}
+assignment : ID '=' exp  { printf("\t%c=e%d\n", $1,$3);}
 			;
 exp    	: term                  {$$ = ++ecounter; printf("\te%d=t%d;\n", ecounter, $1);}
-       	| exp '+' term          {$$ = ++ecounter; printf("\te%d=e%d + t%d;\n", ecounter, $1, $3);}
-       	| exp '-' term          {$$ = $1 - $3;}
+       	| 
        	;
 term   	: number                {$$ = ++tcounter; printf("\tt%d=%d;\n", tcounter, $1);}
-		| identifier			{$$ = ++tcounter; printf("\tt%d=%c;\n", tcounter, $1);} 
+		| ID			{$$ = ++tcounter; printf("\tt%d=%c;\n", tcounter, $1);} 
         ;
 
 %%                     /* C code */
