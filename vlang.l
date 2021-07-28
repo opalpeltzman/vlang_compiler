@@ -1,7 +1,9 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "vlang.h"
 #include "vlang.tab.h"
+
 void yyerror (char *s);
 int yylex();
 %}
@@ -15,9 +17,11 @@ DIGIT     ([0-9])
 "exit"			                    {return exit_command;}
 "scl"                               {return scl;}
 "vec"                               {return vec;}
-{ALPHA}({ALPHA}|{DIGIT})*		    {strcpy(yylval.id, yytext); printf("An identifier: %s\n", yylval.id); return identifier;}
+{ALPHA}({ALPHA}|{DIGIT})*		    {strcpy(yylval.vName, yytext); printf("An identifier: %s\n", yylval.vName); return identifier;}
 {DIGIT}+                            {yylval.num = atoi(yytext); return number;}
-[.:-+*/=;]                          {return yytext[0];}
+[-+*/=;]                            {return yytext[0];}
+"."                                 {return yytext[0];}
+":"                                 {return yytext[0];}
 [ \t\n]                             ;
 .                                   {ECHO; yyerror ("unexpected character");}
 
