@@ -44,7 +44,9 @@
      scl = 260,
      vec = 261,
      identifier = 262,
-     number = 263
+     vecSize = 263,
+     number = 264,
+     constVector = 265
    };
 #endif
 
@@ -55,17 +57,19 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 33 "vlang.y"
+#line 32 "vlang.y"
 
+	int size;
+	int indx;
 	int num;
-	int* scalVector; 
-	char* vName;
-	nodeType *nPtr;
+	char elem[VECLEN]; 
+	char vName[IDLEN];
+	int IndnVar[2];
 	
 
 
 /* Line 1676 of yacc.c  */
-#line 69 "vlang.tab.h"
+#line 73 "vlang.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

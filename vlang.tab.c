@@ -76,33 +76,32 @@
 #include <string.h>
 #include "vlang.h"
 
-int getIndex(char *vName, char mode);      							 /* Returns index from symbol table */
-nodeType *SymIndex(char* vName, char mode, int vType, int size);	 /* Identifier type node */
 
-void freeNodes();													 /* Free nodes allocation */
-void freeNode(nodeType *p);											 /* Free single node allocation */
-
-nodeType *indexToNode(char *vName);												 /* return variable identifier node */
-int* constVectorUpdate(int val);												 /* create and update const vector element */
-nodeType *constVecToNode(char* vName, char mode, int vType);					 /* convert const vector to node */
-nodeType *constNumToNode(char* vName, char mode, int vType, int size, int val);  /* convert const number to node */
-void printVariable(nodeType *p);												 /* print variable */
-nodeType *opr(char oper, nodeType *variable, nodeType *element); 				 /* update variables based on operator */
 
 void yyerror(char *s);
 int yylex();
 
-nodeType *symbols[SYMSIZE];								    		 /* Symbol table */
-char varSymbol[SYMSIZE][IDLEN];										 /* Variable table: for mapping variables to symbol table */
+nodeType symbols[SYMSIZE];						/* Symbol table */
+char vars[SYMSIZE][IDLEN];  					/* Variable table: for mapping variables to symbol table */
 
+ConstVecnodeType ConstVecArray[VECLEN];			/* temporary const vector table */
+int vecIndxCount = -1;							/* vec index counter */
+ConstSclnodeType ConstSclArray[VECLEN];			/* temporary const scalar table */
+int sclIndxCount= -1;							/* scl index counter */
 
-int tcounter=0, ecounter=0, elemCounter = 0;
-int* constVector;													/* remporary const array*/
+/* symbol table help functions */
+void setSymbolTable(char *vName, conType type, int size);		/* update variable in symbol table */
+void getSymIndex(int* dest, char *name, char mode);				/* Returns the variable index from symbol table */
+int variablesIndex(char *name, char mode);						/* variable index in symbol table */	
+
+/* consts table help functions */
+void constsVecUpdate(int* dest, char* value);					/* update const vector table */
+void constsSclUpdate(int* dest, int value);						/* update const scalar table */
 
 
 
 /* Line 189 of yacc.c  */
-#line 106 "vlang.tab.c"
+#line 105 "vlang.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -134,7 +133,9 @@ int* constVector;													/* remporary const array*/
      scl = 260,
      vec = 261,
      identifier = 262,
-     number = 263
+     vecSize = 263,
+     number = 264,
+     constVector = 265
    };
 #endif
 
@@ -145,17 +146,19 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 33 "vlang.y"
+#line 32 "vlang.y"
 
+	int size;
+	int indx;
 	int num;
-	int* scalVector; 
-	char* vName;
-	nodeType *nPtr;
+	char elem[VECLEN]; 
+	char vName[IDLEN];
+	int IndnVar[2];
 	
 
 
 /* Line 214 of yacc.c  */
-#line 159 "vlang.tab.c"
+#line 162 "vlang.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -167,7 +170,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 171 "vlang.tab.c"
+#line 174 "vlang.tab.c"
 
 #ifdef short
 # undef short
@@ -380,22 +383,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  24
+#define YYFINAL  22
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   49
+#define YYLAST   59
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  24
+#define YYNTOKENS  21
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  8
+#define YYNNTS  7
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  21
+#define YYNRULES  23
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  45
+#define YYNSTATES  46
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   263
+#define YYMAXUTOK   265
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -407,15 +410,15 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      17,    18,    12,    10,    21,    11,    14,    13,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    15,    16,
-       2,     9,     2,     2,     2,     2,     2,     2,     2,     2,
+      19,    20,    14,    12,     2,    13,    16,    15,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    17,    18,
+       2,    11,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    19,     2,    20,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    22,     2,    23,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -429,7 +432,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8
+       5,     6,     7,     8,     9,    10
 };
 
 #if YYDEBUG
@@ -437,29 +440,30 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,     9,    12,    15,    19,    23,    25,
-      27,    31,    35,    39,    43,    47,    49,    53,    55,    57,
-      61,    64
+       0,     0,     3,     6,    10,    13,    16,    20,    23,    27,
+      31,    35,    37,    41,    43,    47,    51,    55,    59,    63,
+      65,    67,    69,    72
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      25,     0,    -1,    26,    16,    -1,     4,    16,    -1,    31,
-      16,    -1,    27,    16,    -1,     3,    28,    16,    -1,     7,
-       9,    28,    -1,    28,    -1,    29,    -1,    28,    10,    28,
-      -1,    28,    11,    28,    -1,    28,    12,    28,    -1,    28,
-      13,    28,    -1,    17,    28,    18,    -1,     8,    -1,    19,
-      30,    20,    -1,     7,    -1,     8,    -1,     8,    21,    30,
-      -1,     5,     7,    -1,     6,     7,    22,     8,    23,    -1
+      22,     0,    -1,    23,    18,    -1,    22,    23,    18,    -1,
+       4,    18,    -1,    27,    18,    -1,    22,    27,    18,    -1,
+      24,    18,    -1,    22,    24,    18,    -1,    22,     4,    18,
+      -1,     7,    11,    25,    -1,    25,    -1,     3,    25,    18,
+      -1,    26,    -1,    25,    12,    25,    -1,    25,    13,    25,
+      -1,    25,    14,    25,    -1,    25,    15,    25,    -1,    19,
+      25,    20,    -1,     9,    -1,    10,    -1,     7,    -1,     5,
+       7,    -1,     6,     7,     8,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    59,    59,    60,    61,    62,    63,    65,    67,    68,
-      69,    70,    71,    72,    73,    75,    76,    77,    78,    79,
-      80,    81
+       0,    63,    63,    64,    65,    66,    67,    68,    69,    70,
+      72,    74,    75,    76,    77,    78,    79,    80,    81,    83,
+      84,    85,    86,    87
 };
 #endif
 
@@ -469,9 +473,9 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "print", "exit_command", "scl", "vec",
-  "identifier", "number", "'='", "'+'", "'-'", "'*'", "'/'", "'.'", "':'",
-  "';'", "'('", "')'", "'['", "']'", "','", "'{'", "'}'", "$accept",
-  "line", "assignment", "statement", "exp", "term", "elem", "def", 0
+  "identifier", "vecSize", "number", "constVector", "'='", "'+'", "'-'",
+  "'*'", "'/'", "'.'", "':'", "';'", "'('", "')'", "$accept", "line",
+  "assignment", "statement", "exp", "term", "def", 0
 };
 #endif
 
@@ -480,26 +484,26 @@ static const char *const yytname[] =
    token YYLEX-NUM.  */
 static const yytype_uint16 yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261,   262,   263,    61,
-      43,    45,    42,    47,    46,    58,    59,    40,    41,    91,
-      93,    44,   123,   125
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265,    61,    43,    45,    42,    47,    46,    58,    59,    40,
+      41
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    24,    25,    25,    25,    25,    25,    26,    27,    28,
-      28,    28,    28,    28,    28,    29,    29,    29,    30,    30,
-      31,    31
+       0,    21,    22,    22,    22,    22,    22,    22,    22,    22,
+      23,    24,    24,    25,    25,    25,    25,    25,    25,    26,
+      26,    26,    27,    27
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     2,     2,     2,     3,     3,     1,     1,
-       3,     3,     3,     3,     3,     1,     3,     1,     1,     3,
-       2,     5
+       0,     2,     2,     3,     2,     2,     3,     2,     3,     3,
+       3,     1,     3,     1,     3,     3,     3,     3,     3,     1,
+       1,     1,     2,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -507,35 +511,35 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,    17,    15,     0,     0,     0,
-       0,     0,     8,     9,     0,    17,     0,     3,    20,     0,
-       0,     0,    18,     0,     1,     2,     5,     0,     0,     0,
-       0,     4,     6,     0,     7,    14,     0,    16,    10,    11,
-      12,    13,     0,    19,    21
+       0,     0,     0,     0,     0,    21,    19,    20,     0,     0,
+       0,     0,    11,    13,     0,    21,     0,     4,    22,     0,
+       0,     0,     1,     0,     0,     0,     0,     2,     7,     0,
+       0,     0,     0,     5,    12,    23,    10,    18,     9,     3,
+       8,     6,    14,    15,    16,    17
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     9,    10,    11,    12,    13,    23,    14
+      -1,     9,    10,    11,    12,    13,    14
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -12
+#define YYPACT_NINF -17
 static const yytype_int8 yypact[] =
 {
-       4,    -4,    -2,     9,    10,    11,   -12,    -4,    -3,    18,
-       6,     8,    31,   -12,    23,   -12,    24,   -12,   -12,     3,
-      -4,    20,    25,    27,   -12,   -12,   -12,    -4,    -4,    -4,
-      -4,   -12,   -12,    37,    31,   -12,    -3,   -12,   -11,   -11,
-     -12,   -12,    26,   -12,   -12
+      29,    -6,   -16,    11,    18,    -5,   -17,   -17,    -6,     5,
+       9,    19,    39,   -17,    22,   -17,     8,   -17,   -17,    33,
+      -6,    30,   -17,    28,    31,    37,    38,   -17,   -17,    -6,
+      -6,    -6,    -6,   -17,   -17,   -17,    39,   -17,   -17,   -17,
+     -17,   -17,     2,     2,   -17,   -17
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -12,   -12,   -12,   -12,    -1,   -12,    12,   -12
+     -17,   -17,    48,    49,    -1,   -17,    50
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -545,31 +549,33 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-      16,    29,    30,    15,     6,    22,    21,     1,     2,     3,
-       4,     5,     6,     7,    17,     8,    18,    19,    24,    34,
-      20,     7,    25,     8,    26,    33,    38,    39,    40,    41,
-      27,    28,    29,    30,    27,    28,    29,    30,    35,    31,
-      32,    27,    28,    29,    30,    42,    36,    37,    43,    44
+      16,    15,    17,     6,     7,    22,    20,    21,     1,    23,
+       3,     4,     5,     8,     6,     7,    31,    32,    18,    36,
+      29,    30,    31,    32,     8,    19,    34,    27,    42,    43,
+      44,    45,     1,     2,     3,     4,     5,    28,     6,     7,
+      33,    35,    29,    30,    31,    32,    38,     0,     8,    39,
+      37,    29,    30,    31,    32,    40,    41,    24,    25,    26
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int8 yycheck[] =
 {
-       1,    12,    13,     7,     8,     8,     7,     3,     4,     5,
-       6,     7,     8,    17,    16,    19,     7,     7,     0,    20,
-       9,    17,    16,    19,    16,    22,    27,    28,    29,    30,
-      10,    11,    12,    13,    10,    11,    12,    13,    18,    16,
-      16,    10,    11,    12,    13,     8,    21,    20,    36,    23
+       1,     7,    18,     9,    10,     0,    11,     8,     3,     4,
+       5,     6,     7,    19,     9,    10,    14,    15,     7,    20,
+      12,    13,    14,    15,    19,     7,    18,    18,    29,    30,
+      31,    32,     3,     4,     5,     6,     7,    18,     9,    10,
+      18,     8,    12,    13,    14,    15,    18,    -1,    19,    18,
+      20,    12,    13,    14,    15,    18,    18,     9,     9,     9
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     3,     4,     5,     6,     7,     8,    17,    19,    25,
-      26,    27,    28,    29,    31,     7,    28,    16,     7,     7,
-       9,    28,     8,    30,     0,    16,    16,    10,    11,    12,
-      13,    16,    16,    22,    28,    18,    21,    20,    28,    28,
-      28,    28,     8,    30,    23
+       0,     3,     4,     5,     6,     7,     9,    10,    19,    22,
+      23,    24,    25,    26,    27,     7,    25,    18,     7,     7,
+      11,    25,     0,     4,    23,    24,    27,    18,    18,    12,
+      13,    14,    15,    18,    18,     8,    25,    20,    18,    18,
+      18,    18,    25,    25,    25,    25
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1383,147 +1389,161 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 59 "vlang.y"
-    {ecounter=tcounter=0;;}
+#line 63 "vlang.y"
+    {;;}
     break;
 
   case 3:
 
 /* Line 1455 of yacc.c  */
-#line 60 "vlang.y"
-    {freeNodes();;}
+#line 64 "vlang.y"
+    {;;}
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 61 "vlang.y"
-    {;;}
+#line 65 "vlang.y"
+    {exit(EXIT_SUCCESS);;}
     break;
 
   case 5:
 
 /* Line 1455 of yacc.c  */
-#line 62 "vlang.y"
+#line 66 "vlang.y"
     {;;}
     break;
 
   case 6:
 
 /* Line 1455 of yacc.c  */
-#line 63 "vlang.y"
-    {printVariable((yyvsp[(2) - (3)].nPtr));;}
-    break;
-
-  case 7:
-
-/* Line 1455 of yacc.c  */
-#line 65 "vlang.y"
-    {opr(Assign, indexToNode((yyvsp[(1) - (3)].vName)), (yyvsp[(3) - (3)].nPtr));;}
-    break;
-
-  case 8:
-
-/* Line 1455 of yacc.c  */
 #line 67 "vlang.y"
     {;;}
     break;
 
-  case 9:
+  case 7:
 
 /* Line 1455 of yacc.c  */
 #line 68 "vlang.y"
     {;;}
     break;
 
-  case 10:
+  case 8:
 
 /* Line 1455 of yacc.c  */
 #line 69 "vlang.y"
     {;;}
     break;
 
-  case 11:
+  case 9:
 
 /* Line 1455 of yacc.c  */
 #line 70 "vlang.y"
-    {;;}
+    {exit(EXIT_SUCCESS);;}
     break;
 
-  case 12:
-
-/* Line 1455 of yacc.c  */
-#line 71 "vlang.y"
-    {;;}
-    break;
-
-  case 13:
+  case 10:
 
 /* Line 1455 of yacc.c  */
 #line 72 "vlang.y"
     {;;}
     break;
 
+  case 11:
+
+/* Line 1455 of yacc.c  */
+#line 74 "vlang.y"
+    {;;}
+    break;
+
+  case 12:
+
+/* Line 1455 of yacc.c  */
+#line 75 "vlang.y"
+    {;;}
+    break;
+
+  case 13:
+
+/* Line 1455 of yacc.c  */
+#line 76 "vlang.y"
+    {;;}
+    break;
+
   case 14:
 
 /* Line 1455 of yacc.c  */
-#line 73 "vlang.y"
+#line 77 "vlang.y"
     {;;}
     break;
 
   case 15:
 
 /* Line 1455 of yacc.c  */
-#line 75 "vlang.y"
-    {(yyval.nPtr) = constNumToNode("constScal", SET, constScal, 1, (yyvsp[(1) - (1)].num));;}
+#line 78 "vlang.y"
+    {;;}
     break;
 
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 76 "vlang.y"
-    {(yyval.nPtr) = constVecToNode("constVec", SET, constVec);;}
+#line 79 "vlang.y"
+    {;;}
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 77 "vlang.y"
-    {(yyval.nPtr) = indexToNode((yyvsp[(1) - (1)].vName));;}
+#line 80 "vlang.y"
+    {;;}
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 78 "vlang.y"
-    {constVectorUpdate((yyvsp[(1) - (1)].num));}
+#line 81 "vlang.y"
+    {;;}
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 79 "vlang.y"
-    {constVectorUpdate((yyvsp[(1) - (3)].num));;}
+#line 83 "vlang.y"
+    {printf("\t %d;\n", (yyvsp[(1) - (1)].num)); constsSclUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].num));;}
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 80 "vlang.y"
-    {printf("$d", (yyvsp[(2) - (2)].vName)); (yyval.nPtr) = SymIndex((yyvsp[(2) - (2)].vName), SET, scalar, 1); ;}
+#line 84 "vlang.y"
+    {printf("\t %s;\n", (yyvsp[(1) - (1)].elem)); constsVecUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].elem));;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 81 "vlang.y"
-    {(yyval.nPtr) = SymIndex((yyvsp[(2) - (5)].vName), SET, vector, (yyvsp[(4) - (5)].num)); printf("$d", (yyvsp[(4) - (5)].num));;}
+#line 85 "vlang.y"
+    {printf("\t %s;\n", (yyvsp[(1) - (1)].vName)); getSymIndex((yyval.IndnVar), (yyvsp[(1) - (1)].vName), GET);;}
+    break;
+
+  case 22:
+
+/* Line 1455 of yacc.c  */
+#line 86 "vlang.y"
+    {printf("\tint %s;\n", (yyvsp[(2) - (2)].vName)); setSymbolTable((yyvsp[(2) - (2)].vName), scalar, 0);;}
+    break;
+
+  case 23:
+
+/* Line 1455 of yacc.c  */
+#line 87 "vlang.y"
+    {printf("\tint %s[%d];\n", (yyvsp[(2) - (3)].vName), (yyvsp[(3) - (3)].size)); setSymbolTable((yyvsp[(2) - (3)].vName), vector, (yyvsp[(3) - (3)].size));;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1527 "vlang.tab.c"
+#line 1547 "vlang.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1735,182 +1755,101 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 85 "vlang.y"
+#line 91 "vlang.y"
                      /* C code */
 
-int getIndex(char *vName, char mode){
-	/*  Returns the variable index from symbol table */	
-	switch(mode){
-		case GET:	/* Return index of variable from symbol table */
-		{
-			for(int i = 0; i < SYMSIZE; i++){
-				if (!strcmp(varSymbol[i], "-1")) return -1;
-                else if (!strcmp(vName, varSymbol[i])) return i;    /* ID found */
-			}
-			return -1;
-		}
-		case SET:	/* Sets the index of variable from symbol table and then returns the index */
-		{
-			for(int i = 0; i < SYMSIZE; i++){
-				if(!strcmp(vName, varSymbol[i])) return i;	/* ID already exists */
-				else if(!strcmp(varSymbol[i], "-1")){
-					strcpy(varSymbol[i], vName);
-					return i;
-				}
-			}
-			return -1;
-		}
-	}
-}
-nodeType *SymIndex(char* vName, char mode, int vType, int size){
-	printf("in sym function");
-	int indx;
-	if(vType != constVec && vType != constScal){
-		/*  Initialize node paramaters */
-		indx = getIndex(vName, mode);
-		if (indx == -1 && mode == GET) {
-			yyerror("variable not initialized");
-			exit(1);
-		}
-		else if (indx == -1 && mode == SET) {
-			yyerror("failed to initialize variable");
-			exit(1);
-		}
-	}
-
-	nodeType *p;
-     
-    /* allocate node */
-    if ((p = malloc(sizeof(nodeType))) == NULL)
-        yyerror("out of memory");
-
-    /* copy information */
-	p->type = vType;
-
-	strcpy(p->name, vName);
-	p->value.size = size;
-	/* allocate values array */
-	if ((p->value.val = (int*)malloc(size * sizeof(int))) == NULL)
-        yyerror("values out of memory");
-
-	if(vType != constVec && vType != constScal){
-		p->id = indx;
-		symbols[indx] = p;
-	}
-	return p;
-}
-
-void freeNodes(){
-    for(int i=0; i<SYMSIZE; i++){
-		if(symbols[i] != NULL){
-			for(int j = 0; j<symbols[i]->value.size; j++)
-				free(symbols[i]->value.val);
-			free(symbols[i]);
-		}
-	}
-	exit(EXIT_SUCCESS);
-}
-void freeNode(nodeType *p){
-	if (!p) return;
-    for(int j = 0; j<p->value.size; j++)
-		free(p->value.val);
-    free(p);
-}
-
-nodeType *indexToNode(char *vName){
-	/* return the identifier node */
-	int indx = getIndex(vName, GET);
-	return symbols[indx];
-}
-
-nodeType *constNumToNode(char* vName, char mode, int vType, int size, int val){
-	/* return const element node */
-	nodeType *p = SymIndex(vName, mode, vType, size);
-	(p->value.val)[0] = val;
-	return p;
-}
-
-int* constVectorUpdate(int val){
-	/* update and return const vector element */
-	int size = elemCounter;
-	if(elemCounter == 0){
-		++size;
-		constVector = (int*) calloc(size, sizeof(int));
-		for (int i = elemCounter; i < size; ++i) {
-            constVector[i] = val;
+int variablesIndex(char *name, char mode){
+    /* variable index in symbol table */
+    switch (mode) {
+        case GET:       /* Return index of variable from symbol table */
+        {
+            for (int i = 0; i < SYMSIZE; i++) {
+                if (!strcmp(vars[i], "-1")) return -1;
+                else if (!strcmp(name, vars[i])) return i;    /* ID found */
+            }
+            return -1;
         }
-		elemCounter = size;
-	}
-	else{
-		++size;
-		constVector = realloc(constVector, size * sizeof(int));
-		for (int i = elemCounter; i < size; ++i) {
-            constVector[i] = val;
+        case SET:       /* Sets the index of variable from symbol table and then returns the index */
+        {
+            for (int i = 0; i < SYMSIZE; i++) {
+                if (!strcmp(name, vars[i])) return i;     /* ID already exists */
+                else if (!strcmp(vars[i], "-1")) {
+                    strcpy(vars[i], name);
+                    return i;
+                }
+            }
+            return -1;
         }
-		elemCounter = size;
-	}
-	return constVector;
+    }
 }
 
-nodeType *constVecToNode(char* vName, char mode, int vType){
-	nodeType *p = SymIndex(vName, mode, vType, elemCounter);
-	for (int i = 0; i < p->value.size; ++i)
-		(p->value.val)[i] = constVector[i];
-	elemCounter = 0;
-	free(constVector);
+void setSymbolTable(char *vName, conType type, int size){
+	/* update variable in symbol table */
+	int sIndex = variablesIndex(vName, SET);
+    if(sIndex == -1) {
+        yyerror("failed to initialize variable");
+        exit(1);
+    }
+	symbols[sIndex].type = type;
+	symbols[sIndex].size = size;
+	symbols[sIndex].indx = sIndex;
+	strcpy(symbols[sIndex].name, vName);
 
-	return p;
+	printf("type: %d, size: %d, index: %d, name: %s\n", symbols[sIndex].type, symbols[sIndex].size, symbols[sIndex].indx, symbols[sIndex].name);
 }
 
-nodeType *opr(char oper, nodeType *variable, nodeType *element){
-	/* update variables based on operator */
-	switch(oper){
-		case Assign:{
-			if(variable->type == scalar){
-				if(element->type == scalar || element->type == constScal)
-					*(variable->value.val) = *(element->value.val);
-			}
-			else if(variable->type == vector){	
-				if((element->type == constVec ||element->type == vector) && variable->value.size == element->value.size){
-					for (int i = 0; i < variable->value.size; ++i)
-						(variable->value.val)[i] = (element->value.val)[i];
-				}									
-				if(element->type == scalar){
-					for (int i = 0; i < variable->value.size; ++i)
-						(variable->value.val)[i] = *(element->value.val);
-				}
-			}
-			/* delete memory allocation for constan exp */
-			if(element->type == constVec || element->type == constScal)
-				freeNode(element);
-	
-			return variable;
-		}
-	}
+void getSymIndex(int* dest, char *name, char mode){
+	/* Returns the variable index from symbol table */
+	int sIndex = variablesIndex(name, mode);
+    if(sIndex == -1) {
+        yyerror("ariable not initialized");
+        exit(1);
+    }
+	dest[0] = sIndex;
+	dest[1] = symbolTab;
+	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
 }
 
-void printVariable(nodeType *p){
-	switch(p->type){
-		case scalar:{
-			printf("scalar %d\n", *(p->value.val));
+void constsVecUpdate(int* dest, char* value){
+	vecIndxCount ++;
+	strcpy(ConstVecArray[vecIndxCount].val, value);
+	ConstVecArray[vecIndxCount].indx = vecIndxCount;
+
+	/* calc array size */
+	int count = 0;
+	for(int i=0; value[i] != '\0' ; i++){
+		if(value[i] == ','){
+			count ++;
 		}
-		case vector:{
-			printf("[");
-			for (int i = 0; i < p->value.size; ++i)
-				printf("%d, ", *(p->value.val));
-			printf("]\n");
-		}
-		case constScal: printf("scalarConst %d\n", *(p->value.val));
 	}
+	count ++;
+	printf("count: %d\n", count);
+	dest[0] = vecIndxCount;
+	dest[1] = constVec;
+	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
+}
+
+void constsSclUpdate(int* dest, int value){
+	sclIndxCount ++;
+	ConstSclArray[sclIndxCount].val = value;
+	ConstSclArray[sclIndxCount].indx = sclIndxCount;
+
+	dest[0] = sclIndxCount;
+	dest[1] = constScl;
+	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
 }
 
 int main (void) {
-	/* init symbol table */
-	for(int i=0; i<SYMSIZE; i++) {
-		strcpy(varSymbol[i], "-1");
-		symbols[i] = NULL;
-	}
+	/* init symbol, vec and scl tables */
+	memset(symbols, 0, sizeof(SYMSIZE));
+	memset(ConstVecArray, 0, sizeof(SYMSIZE));
+	memset(ConstSclArray, 0, sizeof(SYMSIZE));
 
+	/* Initialize variable table */
+    for (int i = 0; i < SYMSIZE; i++) strcpy(vars[i], "-1");
+
+	vecIndxCount = -1;
+	sclIndxCount = -1;
 	return yyparse();
 }
 

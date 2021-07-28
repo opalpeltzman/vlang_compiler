@@ -1,5 +1,6 @@
 #define IDLEN 31
 #define SYMSIZE 52
+#define VECLEN 255
 
 /* Modes */
 #define SET 0
@@ -18,19 +19,32 @@ typedef enum
 {
     scalar,
     vector,
-    constScal,
-    constVec
 } conType; /* variables types */
-
-typedef struct{
-    int size;
-    int* val;
-}nodeValue;
 
 typedef struct 
 {
     conType type;
-    nodeValue value;
-    int id;
+    int size;
+    int indx;
     char name[IDLEN];
 } nodeType;
+
+typedef enum
+{
+    constScl,
+    constVec,
+    symbolTab
+} arrayType;/* table types */
+
+typedef struct 
+{
+    int size;
+    int indx;
+    char val[VECLEN];
+} ConstVecnodeType;
+
+typedef struct 
+{
+    int indx;
+    int val;
+} ConstSclnodeType;
