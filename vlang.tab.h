@@ -57,14 +57,14 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 32 "vlang.y"
+#line 38 "vlang.y"
 
 	int size;
-	int indx;
 	int num;
 	char elem[VECLEN]; 
 	char vName[IDLEN];
 	int IndnVar[2];
+	expression expr;
 	
 
 

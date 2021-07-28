@@ -81,6 +81,7 @@
 void yyerror(char *s);
 int yylex();
 
+int ecounter=0;
 nodeType symbols[SYMSIZE];						/* Symbol table */
 char vars[SYMSIZE][IDLEN];  					/* Variable table: for mapping variables to symbol table */
 
@@ -98,10 +99,15 @@ int variablesIndex(char *name, char mode);						/* variable index in symbol tabl
 void constsVecUpdate(int* dest, char* value);					/* update const vector table */
 void constsSclUpdate(int* dest, int value);						/* update const scalar table */
 
+/* print functions */
+void printTerm(expression exp, int* term);						/* print term */
+void printExp(expression exp1, expression exp2, char* oper);	/* print expression */
+void printAssign(char* var, expression exp);					/* print assignment */
+
 
 
 /* Line 189 of yacc.c  */
-#line 105 "vlang.tab.c"
+#line 111 "vlang.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -146,19 +152,19 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 32 "vlang.y"
+#line 38 "vlang.y"
 
 	int size;
-	int indx;
 	int num;
 	char elem[VECLEN]; 
 	char vName[IDLEN];
 	int IndnVar[2];
+	expression expr;
 	
 
 
 /* Line 214 of yacc.c  */
-#line 162 "vlang.tab.c"
+#line 168 "vlang.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -170,7 +176,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 174 "vlang.tab.c"
+#line 180 "vlang.tab.c"
 
 #ifdef short
 # undef short
@@ -440,7 +446,7 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,    10,    13,    16,    20,    23,    27,
+       0,     0,     3,     6,    10,    13,    17,    20,    24,    27,
       31,    35,    37,    41,    43,    47,    51,    55,    59,    63,
       65,    67,    69,    72
 };
@@ -449,8 +455,8 @@ static const yytype_uint8 yyprhs[] =
 static const yytype_int8 yyrhs[] =
 {
       22,     0,    -1,    23,    18,    -1,    22,    23,    18,    -1,
-       4,    18,    -1,    27,    18,    -1,    22,    27,    18,    -1,
-      24,    18,    -1,    22,    24,    18,    -1,    22,     4,    18,
+       4,    18,    -1,    22,     4,    18,    -1,    27,    18,    -1,
+      22,    27,    18,    -1,    24,    18,    -1,    22,    24,    18,
       -1,     7,    11,    25,    -1,    25,    -1,     3,    25,    18,
       -1,    26,    -1,    25,    12,    25,    -1,    25,    13,    25,
       -1,    25,    14,    25,    -1,    25,    15,    25,    -1,    19,
@@ -461,9 +467,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    63,    63,    64,    65,    66,    67,    68,    69,    70,
-      72,    74,    75,    76,    77,    78,    79,    80,    81,    83,
-      84,    85,    86,    87
+       0,    69,    69,    70,    71,    72,    73,    74,    75,    76,
+      78,    80,    81,    82,    83,    84,    85,    86,    87,    89,
+      90,    91,    92,    93
 };
 #endif
 
@@ -501,7 +507,7 @@ static const yytype_uint8 yyr1[] =
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     3,     2,     2,     3,     2,     3,     3,
+       0,     2,     2,     3,     2,     3,     2,     3,     2,     3,
        3,     1,     3,     1,     3,     3,     3,     3,     3,     1,
        1,     1,     2,     3
 };
@@ -513,9 +519,9 @@ static const yytype_uint8 yydefact[] =
 {
        0,     0,     0,     0,     0,    21,    19,    20,     0,     0,
        0,     0,    11,    13,     0,    21,     0,     4,    22,     0,
-       0,     0,     1,     0,     0,     0,     0,     2,     7,     0,
-       0,     0,     0,     5,    12,    23,    10,    18,     9,     3,
-       8,     6,    14,    15,    16,    17
+       0,     0,     1,     0,     0,     0,     0,     2,     8,     0,
+       0,     0,     0,     6,    12,    23,    10,    18,     5,     3,
+       9,     7,    14,    15,    16,    17
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -1389,161 +1395,161 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 63 "vlang.y"
-    {;;}
+#line 69 "vlang.y"
+    {ecounter=0;;}
     break;
 
   case 3:
 
 /* Line 1455 of yacc.c  */
-#line 64 "vlang.y"
+#line 70 "vlang.y"
     {;;}
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 65 "vlang.y"
+#line 71 "vlang.y"
     {exit(EXIT_SUCCESS);;}
     break;
 
   case 5:
 
 /* Line 1455 of yacc.c  */
-#line 66 "vlang.y"
-    {;;}
+#line 72 "vlang.y"
+    {exit(EXIT_SUCCESS);;}
     break;
 
   case 6:
 
 /* Line 1455 of yacc.c  */
-#line 67 "vlang.y"
+#line 73 "vlang.y"
     {;;}
     break;
 
   case 7:
 
 /* Line 1455 of yacc.c  */
-#line 68 "vlang.y"
+#line 74 "vlang.y"
     {;;}
     break;
 
   case 8:
 
 /* Line 1455 of yacc.c  */
-#line 69 "vlang.y"
+#line 75 "vlang.y"
     {;;}
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 70 "vlang.y"
-    {exit(EXIT_SUCCESS);;}
+#line 76 "vlang.y"
+    {;;}
     break;
 
   case 10:
 
 /* Line 1455 of yacc.c  */
-#line 72 "vlang.y"
-    {;;}
+#line 78 "vlang.y"
+    {printAssign((yyvsp[(1) - (3)].vName), (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
-#line 74 "vlang.y"
-    {;;}
-    break;
-
-  case 12:
-
-/* Line 1455 of yacc.c  */
-#line 75 "vlang.y"
-    {;;}
-    break;
-
-  case 13:
-
-/* Line 1455 of yacc.c  */
-#line 76 "vlang.y"
-    {;;}
-    break;
-
-  case 14:
-
-/* Line 1455 of yacc.c  */
-#line 77 "vlang.y"
-    {;;}
-    break;
-
-  case 15:
-
-/* Line 1455 of yacc.c  */
-#line 78 "vlang.y"
-    {;;}
-    break;
-
-  case 16:
-
-/* Line 1455 of yacc.c  */
-#line 79 "vlang.y"
-    {;;}
-    break;
-
-  case 17:
 
 /* Line 1455 of yacc.c  */
 #line 80 "vlang.y"
     {;;}
     break;
 
-  case 18:
+  case 12:
 
 /* Line 1455 of yacc.c  */
 #line 81 "vlang.y"
     {;;}
     break;
 
-  case 19:
+  case 13:
+
+/* Line 1455 of yacc.c  */
+#line 82 "vlang.y"
+    {printTerm((yyval.expr), (yyvsp[(1) - (1)].IndnVar));;}
+    break;
+
+  case 14:
 
 /* Line 1455 of yacc.c  */
 #line 83 "vlang.y"
-    {printf("\t %d;\n", (yyvsp[(1) - (1)].num)); constsSclUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].num));;}
+    {;;}
+    break;
+
+  case 15:
+
+/* Line 1455 of yacc.c  */
+#line 84 "vlang.y"
+    {;;}
+    break;
+
+  case 16:
+
+/* Line 1455 of yacc.c  */
+#line 85 "vlang.y"
+    {;;}
+    break;
+
+  case 17:
+
+/* Line 1455 of yacc.c  */
+#line 86 "vlang.y"
+    {;;}
+    break;
+
+  case 18:
+
+/* Line 1455 of yacc.c  */
+#line 87 "vlang.y"
+    {;;}
+    break;
+
+  case 19:
+
+/* Line 1455 of yacc.c  */
+#line 89 "vlang.y"
+    {constsSclUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].num));;}
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 84 "vlang.y"
-    {printf("\t %s;\n", (yyvsp[(1) - (1)].elem)); constsVecUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].elem));;}
+#line 90 "vlang.y"
+    {constsVecUpdate((yyval.IndnVar), (yyvsp[(1) - (1)].elem));;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 85 "vlang.y"
-    {printf("\t %s;\n", (yyvsp[(1) - (1)].vName)); getSymIndex((yyval.IndnVar), (yyvsp[(1) - (1)].vName), GET);;}
+#line 91 "vlang.y"
+    {getSymIndex((yyval.IndnVar), (yyvsp[(1) - (1)].vName), GET);;}
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 86 "vlang.y"
+#line 92 "vlang.y"
     {printf("\tint %s;\n", (yyvsp[(2) - (2)].vName)); setSymbolTable((yyvsp[(2) - (2)].vName), scalar, 0);;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 87 "vlang.y"
+#line 93 "vlang.y"
     {printf("\tint %s[%d];\n", (yyvsp[(2) - (3)].vName), (yyvsp[(3) - (3)].size)); setSymbolTable((yyvsp[(2) - (3)].vName), vector, (yyvsp[(3) - (3)].size));;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1547 "vlang.tab.c"
+#line 1553 "vlang.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1755,7 +1761,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 91 "vlang.y"
+#line 97 "vlang.y"
                      /* C code */
 
 int variablesIndex(char *name, char mode){
@@ -1802,12 +1808,12 @@ void getSymIndex(int* dest, char *name, char mode){
 	/* Returns the variable index from symbol table */
 	int sIndex = variablesIndex(name, mode);
     if(sIndex == -1) {
-        yyerror("ariable not initialized");
+        yyerror("variable not initialized");
         exit(1);
     }
 	dest[0] = sIndex;
 	dest[1] = symbolTab;
-	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
+	// printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
 }
 
 void constsVecUpdate(int* dest, char* value){
@@ -1823,10 +1829,11 @@ void constsVecUpdate(int* dest, char* value){
 		}
 	}
 	count ++;
-	printf("count: %d\n", count);
+	ConstVecArray[vecIndxCount].size = count;
+	// printf("count: %d\n", count);
 	dest[0] = vecIndxCount;
 	dest[1] = constVec;
-	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
+	// printf(" %s \n", ConstVecArray[vecIndxCount].val);
 }
 
 void constsSclUpdate(int* dest, int value){
@@ -1836,14 +1843,76 @@ void constsSclUpdate(int* dest, int value){
 
 	dest[0] = sclIndxCount;
 	dest[1] = constScl;
-	printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
+	printf("term- sIndex: %d array type: %d\n", dest[0], dest[1]);
+}
+
+void printTerm(expression exp, int* term){
+	/* print term */
+	switch(term[1]){
+		case symbolTab:{
+			printf("\te%d=%s\n", ecounter, symbols[term[0]].name);
+			exp.type = symbols[term[0]].type;
+			exp.indx = term[0];
+			exp.ecounter = ecounter;
+			ecounter++; 
+			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
+			break;
+		}
+		case constVec:{
+			printf("\te%d=%s\n", ecounter, ConstVecArray[term[0]].val);
+			exp.type = coVector;
+			exp.indx = term[0];
+			exp.ecounter = ecounter;
+			ecounter++; 
+			break;
+		}
+		case constScl:{
+			printf("\te%d=%d\n", ecounter, ConstSclArray[term[0]].val);
+			exp.type = coScalar;
+			exp.indx = term[0];
+			exp.ecounter = ecounter;
+			ecounter++; 
+			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
+			break;
+		}
+	}
+}
+
+void printAssign(char* var, expression exp){
+	/* possible assignments: s=s v=constV v=v v=s v=constS */
+	int sIndex = variablesIndex(var, GET);
+    if(sIndex == -1) {
+        yyerror("variable not initialized");
+        exit(1);
+    }
+	printf("symbol type: %d\n", symbols[sIndex].type);
+	switch(symbols[sIndex].type){
+		case scalar:{
+			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
+			if(exp.type == scalar || exp.type == coScalar){
+				printf("\t%s=e%d\n", symbols[sIndex].name, exp.ecounter);
+			}else{
+				yyerror("not valid action!");
+        		exit(1);
+			}
+			break;
+		}
+		case vector:{
+
+			break;
+		}
+	}
+}
+
+void printExp(expression exp1, expression exp2, char* oper){
+
 }
 
 int main (void) {
 	/* init symbol, vec and scl tables */
-	memset(symbols, 0, sizeof(SYMSIZE));
-	memset(ConstVecArray, 0, sizeof(SYMSIZE));
-	memset(ConstSclArray, 0, sizeof(SYMSIZE));
+	// memset(symbols, 0, sizeof(SYMSIZE));
+	// memset(ConstVecArray, 0, sizeof(SYMSIZE));
+	// memset(ConstSclArray, 0, sizeof(SYMSIZE));
 
 	/* Initialize variable table */
     for (int i = 0; i < SYMSIZE; i++) strcpy(vars[i], "-1");

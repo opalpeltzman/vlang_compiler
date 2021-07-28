@@ -19,6 +19,8 @@ typedef enum
 {
     scalar,
     vector,
+    coVector,
+    coScalar
 } conType; /* variables types */
 
 typedef struct 
@@ -48,3 +50,10 @@ typedef struct
     int indx;
     int val;
 } ConstSclnodeType;
+
+typedef struct 
+{
+    int indx;
+    conType type;
+    int ecounter;
+} expression;
