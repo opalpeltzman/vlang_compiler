@@ -63,7 +63,7 @@ typedef union YYSTYPE
 	int num;
 	char elem[VECLEN]; 
 	char vName[IDLEN];
-	int IndnVar[2];
+	int IndnVar[3];
 	expression expr;
 	
 

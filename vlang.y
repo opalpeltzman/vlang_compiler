@@ -21,15 +21,15 @@ int sclIndxCount= -1;							/* scl index counter */
 
 /* symbol table help functions */
 void setSymbolTable(char *vName, conType type, int size);		/* update variable in symbol table */
-void getSymIndex(int* dest, char *name, char mode);				/* Returns the variable index from symbol table */
+expression getSymIndex(char *name, char mode);					/* Returns the variable index from symbol table */
 int variablesIndex(char *name, char mode);						/* variable index in symbol table */	
 
 /* consts table help functions */
-void constsVecUpdate(int* dest, char* value);					/* update const vector table */
-void constsSclUpdate(int* dest, int value);						/* update const scalar table */
+expression constsVecUpdate(char* value);						/* update const vector table */
+expression constsSclUpdate(int value);							/* update const scalar table */
 
 /* print functions */
-void printTerm(expression exp, int* term);						/* print term */
+expression printTerm(expression term);							/* print term */
 void printExp(expression exp1, expression exp2, char* oper);	/* print expression */
 void printAssign(char* var, expression exp);					/* print assignment */
 
@@ -40,7 +40,7 @@ void printAssign(char* var, expression exp);					/* print assignment */
 	int num;
 	char elem[VECLEN]; 
 	char vName[IDLEN];
-	int IndnVar[2];
+	int IndnVar[3];
 	expression expr;
 	}         									 /* type of variables */
 %start line                                      /* Yacc definitions */
@@ -54,7 +54,7 @@ void printAssign(char* var, expression exp);					/* print assignment */
 %token <num> number
 %token <elem> constVector
 
-%type <IndnVar> term
+%type <expr> term
 %type <expr> line exp  
 
 %right '='
@@ -79,16 +79,16 @@ assignment  : identifier '=' exp  			{printAssign($1, $3);}
 			;
 statement	: exp							{;} 
 			| print exp	';'					{;}				
-exp    		: term                  		{printTerm($$, $1);}
+exp    		: term                  		{$$ = printTerm($1);}
        		| exp '+' exp					{;}
 			| exp '-' exp					{;}
 			| exp '*' exp					{;}
 			| exp '/' exp					{;}
 			| '(' exp ')'					{;}
        		;
-term   		: number                		{constsSclUpdate($$, $1);}
-			| constVector					{constsVecUpdate($$, $1);}
-			| identifier					{getSymIndex($$, $1, GET);} 
+term   		: number                		{$$ = constsSclUpdate($1);}
+			| constVector					{$$ = constsVecUpdate($1);}
+			| identifier					{$$ = getSymIndex($1, GET);} 
 def			: scl identifier				{printf("\tint %s;\n", $2); setSymbolTable($2, scalar, 0);}
 			| vec identifier vecSize		{printf("\tint %s[%d];\n", $2, $3); setSymbolTable($2, vector, $3);}
         	;
@@ -133,81 +133,93 @@ void setSymbolTable(char *vName, conType type, int size){
 	symbols[sIndex].indx = sIndex;
 	strcpy(symbols[sIndex].name, vName);
 
-	printf("type: %d, size: %d, index: %d, name: %s\n", symbols[sIndex].type, symbols[sIndex].size, symbols[sIndex].indx, symbols[sIndex].name);
+	// printf("type: %d, size: %d, index: %d, name: %s\n", symbols[sIndex].type, symbols[sIndex].size, symbols[sIndex].indx, symbols[sIndex].name);
 }
 
-void getSymIndex(int* dest, char *name, char mode){
+expression getSymIndex(char *name, char mode){
 	/* Returns the variable index from symbol table */
+	expression dest;
 	int sIndex = variablesIndex(name, mode);
     if(sIndex == -1) {
         yyerror("variable not initialized");
         exit(1);
     }
-	dest[0] = sIndex;
-	dest[1] = symbolTab;
-	// printf("sIndex: %d array type: %d\n", dest[0], dest[1]);
+	dest.indx = sIndex;
+	dest.type = symbols[sIndex].type;
+	dest.ecounter = -1;
+	// printf("sIndex: %d array type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
+	return dest;
 }
 
-void constsVecUpdate(int* dest, char* value){
+expression constsVecUpdate(char* value){	
+	expression dest;
 	vecIndxCount ++;
-	strcpy(ConstVecArray[vecIndxCount].val, value);
 	ConstVecArray[vecIndxCount].indx = vecIndxCount;
 
 	/* calc array size */
 	int count = 0;
-	for(int i=0; value[i] != '\0' ; i++){
+	for(int i=0; value[i] != '\0' ; i++){	/* count size of array */
 		if(value[i] == ','){
 			count ++;
+		}
+		if(value[i] == '['){				/* replace [] to {} */
+			value[i] = '{';
+		}
+		if(value[i] == ']'){				/* replace [] to {} */
+			value[i] = '}';
 		}
 	}
 	count ++;
 	ConstVecArray[vecIndxCount].size = count;
+	strcpy(ConstVecArray[vecIndxCount].val, value);
 	// printf("count: %d\n", count);
-	dest[0] = vecIndxCount;
-	dest[1] = constVec;
-	// printf(" %s \n", ConstVecArray[vecIndxCount].val);
+	dest.indx = vecIndxCount;
+	dest.type = coVector;
+	dest.ecounter = -1;
+	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
+	// printf("value: %s\n", ConstVecArray[vecIndxCount].val);
+	// printf("vector size: %d\n", ConstVecArray[vecIndxCount].size);
+	return dest;
 }
 
-void constsSclUpdate(int* dest, int value){
+expression constsSclUpdate(int value){
+	expression dest;
 	sclIndxCount ++;
 	ConstSclArray[sclIndxCount].val = value;
 	ConstSclArray[sclIndxCount].indx = sclIndxCount;
 
-	dest[0] = sclIndxCount;
-	dest[1] = constScl;
-	printf("term- sIndex: %d array type: %d\n", dest[0], dest[1]);
+	dest.indx = sclIndxCount;
+	dest.type = coScalar;
+	dest.ecounter = -1;
+	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
+	// printf("value: %d\n", ConstSclArray[sclIndxCount].val);
+	return dest;
 }
 
-void printTerm(expression exp, int* term){
+expression printTerm(expression term){
+	expression exp;
+	exp.type = term.type;
+	exp.indx = term.indx;
+	exp.ecounter = ecounter;
+	ecounter++;
 	/* print term */
-	switch(term[1]){
-		case symbolTab:{
-			printf("\te%d=%s\n", ecounter, symbols[term[0]].name);
-			exp.type = symbols[term[0]].type;
-			exp.indx = term[0];
-			exp.ecounter = ecounter;
-			ecounter++; 
-			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
-			break;
-		}
-		case constVec:{
-			printf("\te%d=%s\n", ecounter, ConstVecArray[term[0]].val);
-			exp.type = coVector;
-			exp.indx = term[0];
-			exp.ecounter = ecounter;
-			ecounter++; 
-			break;
-		}
-		case constScl:{
-			printf("\te%d=%d\n", ecounter, ConstSclArray[term[0]].val);
-			exp.type = coScalar;
-			exp.indx = term[0];
-			exp.ecounter = ecounter;
-			ecounter++; 
-			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
-			break;
-		}
+	if(term.type == vector){
+		printf("\tint e%d[%d];\n", exp.ecounter, symbols[exp.indx].size);
+		printf("\tmemcpy(e%d, %s, sizeof(%s));\n", exp.ecounter, symbols[exp.indx].name, symbols[exp.indx].name);
+		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
+	else if(term.type == scalar){
+		printf("\te%d = %s\n", exp.ecounter, symbols[exp.indx].name);
+	}
+	else if(term.type == coVector){
+		printf("\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
+		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
+	}
+	else if(term.type == coScalar){
+		printf("\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
+		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
+	}
+	return exp;
 }
 
 void printAssign(char* var, expression exp){
@@ -251,6 +263,7 @@ int main (void) {
 
 	vecIndxCount = -1;
 	sclIndxCount = -1;
+	ecounter=0;
 	return yyparse();
 }
 

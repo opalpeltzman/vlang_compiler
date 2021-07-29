@@ -8,15 +8,6 @@
 
 typedef enum
 {
-    Assign,
-    plus,
-    minus,
-    divide,
-    mult
-} operType;
-
-typedef enum
-{
     scalar,
     vector,
     coVector,
@@ -30,13 +21,6 @@ typedef struct
     int indx;
     char name[IDLEN];
 } nodeType;
-
-typedef enum
-{
-    constScl,
-    constVec,
-    symbolTab
-} arrayType;/* table types */
 
 typedef struct 
 {
