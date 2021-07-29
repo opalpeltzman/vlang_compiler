@@ -100,14 +100,15 @@ expression constsVecUpdate(char* value);						/* update const vector table */
 expression constsSclUpdate(int value);							/* update const scalar table */
 
 /* print functions */
-expression printTerm(expression term);							/* print term */
-void printExp(expression exp1, expression exp2, char* oper);	/* print expression */
-void printAssign(char* var, expression exp);					/* print assignment */
+void printFileInitialize();											/* prepare C file */
+expression printTerm(expression term);								/* print term */
+expression printExp(expression exp1, char* oper, expression exp2);	/* print expression */
+expression printAssign(char* var, expression exp);					/* print assignment */
 
 
 
 /* Line 189 of yacc.c  */
-#line 111 "vlang.tab.c"
+#line 112 "vlang.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -152,7 +153,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 38 "vlang.y"
+#line 39 "vlang.y"
 
 	int size;
 	int num;
@@ -164,7 +165,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 168 "vlang.tab.c"
+#line 169 "vlang.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -176,7 +177,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 180 "vlang.tab.c"
+#line 181 "vlang.tab.c"
 
 #ifdef short
 # undef short
@@ -391,16 +392,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  22
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   59
+#define YYLAST   70
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  21
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  7
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  23
+#define YYNRULES  25
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  46
+#define YYNSTATES  50
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
@@ -448,7 +449,7 @@ static const yytype_uint8 yyprhs[] =
 {
        0,     0,     3,     6,    10,    13,    17,    20,    24,    27,
       31,    35,    37,    41,    43,    47,    51,    55,    59,    63,
-      65,    67,    69,    72
+      67,    71,    73,    75,    77,    80
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
@@ -459,17 +460,18 @@ static const yytype_int8 yyrhs[] =
       22,    27,    18,    -1,    24,    18,    -1,    22,    24,    18,
       -1,     7,    11,    25,    -1,    25,    -1,     3,    25,    18,
       -1,    26,    -1,    25,    12,    25,    -1,    25,    13,    25,
-      -1,    25,    14,    25,    -1,    25,    15,    25,    -1,    19,
-      25,    20,    -1,     9,    -1,    10,    -1,     7,    -1,     5,
-       7,    -1,     6,     7,     8,    -1
+      -1,    25,    14,    25,    -1,    25,    15,    25,    -1,    25,
+      16,    25,    -1,    25,    17,    25,    -1,    19,    25,    20,
+      -1,     9,    -1,    10,    -1,     7,    -1,     5,     7,    -1,
+       6,     7,     8,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    69,    69,    70,    71,    72,    73,    74,    75,    76,
-      78,    80,    81,    82,    83,    84,    85,    86,    87,    89,
-      90,    91,    92,    93
+       0,    70,    70,    71,    72,    73,    74,    75,    76,    77,
+      79,    81,    82,    83,    84,    85,    86,    87,    88,    89,
+      90,    92,    93,    94,    95,    96
 };
 #endif
 
@@ -500,16 +502,16 @@ static const yytype_uint16 yytoknum[] =
 static const yytype_uint8 yyr1[] =
 {
        0,    21,    22,    22,    22,    22,    22,    22,    22,    22,
-      23,    24,    24,    25,    25,    25,    25,    25,    25,    26,
-      26,    26,    27,    27
+      23,    24,    24,    25,    25,    25,    25,    25,    25,    25,
+      25,    26,    26,    26,    27,    27
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     2,     3,     2,     3,     2,     3,     2,     3,
-       3,     1,     3,     1,     3,     3,     3,     3,     3,     1,
-       1,     1,     2,     3
+       3,     1,     3,     1,     3,     3,     3,     3,     3,     3,
+       3,     1,     1,     1,     2,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -517,11 +519,11 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,    21,    19,    20,     0,     0,
-       0,     0,    11,    13,     0,    21,     0,     4,    22,     0,
+       0,     0,     0,     0,     0,    23,    21,    22,     0,     0,
+       0,     0,    11,    13,     0,    23,     0,     4,    24,     0,
        0,     0,     1,     0,     0,     0,     0,     2,     8,     0,
-       0,     0,     0,     6,    12,    23,    10,    18,     5,     3,
-       9,     7,    14,    15,    16,    17
+       0,     0,     0,     0,     0,     6,    12,    25,    10,    20,
+       5,     3,     9,     7,    14,    15,    16,    17,    18,    19
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -535,17 +537,17 @@ static const yytype_int8 yydefgoto[] =
 #define YYPACT_NINF -17
 static const yytype_int8 yypact[] =
 {
-      29,    -6,   -16,    11,    18,    -5,   -17,   -17,    -6,     5,
-       9,    19,    39,   -17,    22,   -17,     8,   -17,   -17,    33,
-      -6,    30,   -17,    28,    31,    37,    38,   -17,   -17,    -6,
-      -6,    -6,    -6,   -17,   -17,   -17,    39,   -17,   -17,   -17,
-     -17,   -17,     2,     2,   -17,   -17
+      31,    -6,   -16,    11,    18,    -5,   -17,   -17,    -6,     5,
+       8,     9,    48,   -17,    21,   -17,    41,   -17,   -17,    34,
+      -6,    32,   -17,    25,    33,    49,    50,   -17,   -17,    -6,
+      -6,    -6,    -6,    -6,    -6,   -17,   -17,   -17,    48,   -17,
+     -17,   -17,   -17,   -17,     6,     6,     0,     0,   -17,   -17
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -17,   -17,    48,    49,    -1,   -17,    50
+     -17,   -17,    57,    60,    -1,   -17,    61
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -556,21 +558,25 @@ static const yytype_int8 yypgoto[] =
 static const yytype_uint8 yytable[] =
 {
       16,    15,    17,     6,     7,    22,    20,    21,     1,    23,
-       3,     4,     5,     8,     6,     7,    31,    32,    18,    36,
-      29,    30,    31,    32,     8,    19,    34,    27,    42,    43,
-      44,    45,     1,     2,     3,     4,     5,    28,     6,     7,
-      33,    35,    29,    30,    31,    32,    38,     0,     8,    39,
-      37,    29,    30,    31,    32,    40,    41,    24,    25,    26
+       3,     4,     5,     8,     6,     7,    33,    34,    18,    38,
+      31,    32,    33,    34,     8,    19,    27,    28,    44,    45,
+      46,    47,    48,    49,     1,     2,     3,     4,     5,    35,
+       6,     7,    37,    40,    29,    30,    31,    32,    33,    34,
+       8,    41,    39,    29,    30,    31,    32,    33,    34,    36,
+      29,    30,    31,    32,    33,    34,    24,    42,    43,    25,
+      26
 };
 
-static const yytype_int8 yycheck[] =
+static const yytype_uint8 yycheck[] =
 {
        1,     7,    18,     9,    10,     0,    11,     8,     3,     4,
-       5,     6,     7,    19,     9,    10,    14,    15,     7,    20,
-      12,    13,    14,    15,    19,     7,    18,    18,    29,    30,
-      31,    32,     3,     4,     5,     6,     7,    18,     9,    10,
-      18,     8,    12,    13,    14,    15,    18,    -1,    19,    18,
-      20,    12,    13,    14,    15,    18,    18,     9,     9,     9
+       5,     6,     7,    19,     9,    10,    16,    17,     7,    20,
+      14,    15,    16,    17,    19,     7,    18,    18,    29,    30,
+      31,    32,    33,    34,     3,     4,     5,     6,     7,    18,
+       9,    10,     8,    18,    12,    13,    14,    15,    16,    17,
+      19,    18,    20,    12,    13,    14,    15,    16,    17,    18,
+      12,    13,    14,    15,    16,    17,     9,    18,    18,     9,
+       9
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -580,8 +586,8 @@ static const yytype_uint8 yystos[] =
        0,     3,     4,     5,     6,     7,     9,    10,    19,    22,
       23,    24,    25,    26,    27,     7,    25,    18,     7,     7,
       11,    25,     0,     4,    23,    24,    27,    18,    18,    12,
-      13,    14,    15,    18,    18,     8,    25,    20,    18,    18,
-      18,    18,    25,    25,    25,    25
+      13,    14,    15,    16,    17,    18,    18,     8,    25,    20,
+      18,    18,    18,    18,    25,    25,    25,    25,    25,    25
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1395,161 +1401,175 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 69 "vlang.y"
+#line 70 "vlang.y"
     {ecounter=0;;}
     break;
 
   case 3:
 
 /* Line 1455 of yacc.c  */
-#line 70 "vlang.y"
+#line 71 "vlang.y"
     {;;}
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 71 "vlang.y"
+#line 72 "vlang.y"
     {exit(EXIT_SUCCESS);;}
     break;
 
   case 5:
 
 /* Line 1455 of yacc.c  */
-#line 72 "vlang.y"
+#line 73 "vlang.y"
     {exit(EXIT_SUCCESS);;}
     break;
 
   case 6:
 
 /* Line 1455 of yacc.c  */
-#line 73 "vlang.y"
+#line 74 "vlang.y"
     {;;}
     break;
 
   case 7:
 
 /* Line 1455 of yacc.c  */
-#line 74 "vlang.y"
+#line 75 "vlang.y"
     {;;}
     break;
 
   case 8:
 
 /* Line 1455 of yacc.c  */
-#line 75 "vlang.y"
+#line 76 "vlang.y"
     {;;}
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 76 "vlang.y"
+#line 77 "vlang.y"
     {;;}
     break;
 
   case 10:
 
 /* Line 1455 of yacc.c  */
-#line 78 "vlang.y"
-    {printAssign((yyvsp[(1) - (3)].vName), (yyvsp[(3) - (3)].expr));;}
+#line 79 "vlang.y"
+    {(yyval.expr) = printAssign((yyvsp[(1) - (3)].vName), (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
-#line 80 "vlang.y"
-    {;;}
-    break;
-
-  case 12:
 
 /* Line 1455 of yacc.c  */
 #line 81 "vlang.y"
     {;;}
     break;
 
-  case 13:
+  case 12:
 
 /* Line 1455 of yacc.c  */
 #line 82 "vlang.y"
+    {;;}
+    break;
+
+  case 13:
+
+/* Line 1455 of yacc.c  */
+#line 83 "vlang.y"
     {(yyval.expr) = printTerm((yyvsp[(1) - (1)].expr));;}
     break;
 
   case 14:
 
 /* Line 1455 of yacc.c  */
-#line 83 "vlang.y"
-    {;;}
+#line 84 "vlang.y"
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "+", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 15:
 
 /* Line 1455 of yacc.c  */
-#line 84 "vlang.y"
-    {;;}
+#line 85 "vlang.y"
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "-", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 85 "vlang.y"
-    {;;}
+#line 86 "vlang.y"
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "*", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 86 "vlang.y"
-    {;;}
+#line 87 "vlang.y"
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "/", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 87 "vlang.y"
-    {;;}
+#line 88 "vlang.y"
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), ".", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
 #line 89 "vlang.y"
-    {(yyval.expr) = constsSclUpdate((yyvsp[(1) - (1)].num));;}
+    {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), ":", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
 #line 90 "vlang.y"
-    {(yyval.expr) = constsVecUpdate((yyvsp[(1) - (1)].elem));;}
+    {;;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 91 "vlang.y"
-    {(yyval.expr) = getSymIndex((yyvsp[(1) - (1)].vName), GET);;}
+#line 92 "vlang.y"
+    {(yyval.expr) = constsSclUpdate((yyvsp[(1) - (1)].num));;}
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 92 "vlang.y"
-    {printf("\tint %s;\n", (yyvsp[(2) - (2)].vName)); setSymbolTable((yyvsp[(2) - (2)].vName), scalar, 0);;}
+#line 93 "vlang.y"
+    {(yyval.expr) = constsVecUpdate((yyvsp[(1) - (1)].elem));;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 93 "vlang.y"
+#line 94 "vlang.y"
+    {(yyval.expr) = getSymIndex((yyvsp[(1) - (1)].vName), GET);;}
+    break;
+
+  case 24:
+
+/* Line 1455 of yacc.c  */
+#line 95 "vlang.y"
+    {printf("\tint %s;\n", (yyvsp[(2) - (2)].vName)); setSymbolTable((yyvsp[(2) - (2)].vName), scalar, 0);;}
+    break;
+
+  case 25:
+
+/* Line 1455 of yacc.c  */
+#line 96 "vlang.y"
     {printf("\tint %s[%d];\n", (yyvsp[(2) - (3)].vName), (yyvsp[(3) - (3)].size)); setSymbolTable((yyvsp[(2) - (3)].vName), vector, (yyvsp[(3) - (3)].size));;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1553 "vlang.tab.c"
+#line 1573 "vlang.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1761,7 +1781,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 97 "vlang.y"
+#line 100 "vlang.y"
                      /* C code */
 
 int variablesIndex(char *name, char mode){
@@ -1815,6 +1835,7 @@ expression getSymIndex(char *name, char mode){
 	dest.indx = sIndex;
 	dest.type = symbols[sIndex].type;
 	dest.ecounter = -1;
+	dest.size = symbols[sIndex].size;
 	// printf("sIndex: %d array type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
 	return dest;
 }
@@ -1844,6 +1865,7 @@ expression constsVecUpdate(char* value){
 	dest.indx = vecIndxCount;
 	dest.type = coVector;
 	dest.ecounter = -1;
+	dest.size = count;
 	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
 	// printf("value: %s\n", ConstVecArray[vecIndxCount].val);
 	// printf("vector size: %d\n", ConstVecArray[vecIndxCount].size);
@@ -1859,6 +1881,7 @@ expression constsSclUpdate(int value){
 	dest.indx = sclIndxCount;
 	dest.type = coScalar;
 	dest.ecounter = -1;
+	dest.size = 0;
 	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
 	// printf("value: %d\n", ConstSclArray[sclIndxCount].val);
 	return dest;
@@ -1868,56 +1891,135 @@ expression printTerm(expression term){
 	expression exp;
 	exp.type = term.type;
 	exp.indx = term.indx;
-	exp.ecounter = ecounter;
-	ecounter++;
+
 	/* print term */
 	if(term.type == vector){
-		printf("\tint e%d[%d];\n", exp.ecounter, symbols[exp.indx].size);
-		printf("\tmemcpy(e%d, %s, sizeof(%s));\n", exp.ecounter, symbols[exp.indx].name, symbols[exp.indx].name);
+		// printf("\tint e%d[%d];\n", exp.ecounter, symbols[exp.indx].size);
+		// printf("\tmemcpy(e%d, %s, sizeof(%s));\n", exp.ecounter, symbols[exp.indx].name, symbols[exp.indx].name);
+		exp.ecounter = -1;
 		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
 	else if(term.type == scalar){
-		printf("\te%d=%s\n", exp.ecounter, symbols[exp.indx].name);
+		// printf("\te%d = %s\n", exp.ecounter, symbols[exp.indx].name);
+		exp.ecounter = -1;
 	}
 	else if(term.type == coVector){
+		exp.ecounter = ecounter;
 		printf("\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
+		ecounter++;
 		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
 	else if(term.type == coScalar){
+		exp.ecounter = ecounter;
 		printf("\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
+		ecounter++;
 		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
 	return exp;
 }
 
-void printAssign(char* var, expression exp){
+expression printAssign(char* var, expression exp){
 	/* possible assignments: s=s v=constV v=v v=s v=constS */
+	expression dest;
 	int sIndex = variablesIndex(var, GET);
     if(sIndex == -1) {
         yyerror("variable not initialized");
         exit(1);
     }
-	printf("symbol type: %d\n", symbols[sIndex].type);
-	switch(symbols[sIndex].type){
-		case scalar:{
-			printf("exp type: %d exp indx: %d\n", exp.type, exp.indx);
-			if(exp.type == scalar || exp.type == coScalar){
-				printf("\t%s=e%d\n", symbols[sIndex].name, exp.ecounter);
+	/* update returned expression */
+	dest.type = symbols[sIndex].type;
+	dest.indx = sIndex;
+	dest.ecounter = -1;
+	
+	if(symbols[sIndex].type == scalar){			/* scalar handling */
+		if(exp.type == scalar){
+			printf("\t%s = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
+		}else if(exp.type == coScalar){
+			printf("\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
+		}else{
+			yyerror("not valid action!");
+			exit(1);
+		}
+	}else if(symbols[sIndex].type == vector){	/* vector handling */
+		if(exp.type == scalar){
+			printf("\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			printf("\t\t%s[i] = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
+			printf("\t}\n");
+		}else if(exp.type == coScalar){
+			printf("\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			printf("\t\t%s[i] = e%d;\n", symbols[sIndex].name, exp.ecounter);
+			printf("\t}\n");
+		}else if(exp.type == vector){
+			if(symbols[sIndex].size == symbols[exp.indx].size){
+				printf("\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
 			}else{
-				yyerror("not valid action!");
-        		exit(1);
+				yyerror("can't assigned different sizes");
+				exit(1);
 			}
-			break;
+		}else if(exp.type == coVector){
+			if(symbols[sIndex].size == exp.size){
+				printf("\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
+			}else{
+				yyerror("can't assigned different sizes");
+				exit(1);
+			}
+		}else{
+			yyerror("not valid action");
+			exit(1);
+		}	
+	}else{										/* error */
+			yyerror("not valid identifier");
+			exit(1);
 		}
-		case vector:{
-
-			break;
-		}
-	}
+	return dest;
 }
 
-void printExp(expression exp1, expression exp2, char* oper){
+expression printExp(expression exp1, char* oper, expression exp2){
+	expression dest;
+	dest.ecounter = ecounter++;
+	if(exp1.type == scalar){
+		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
+			yyerror("not valid operand for scalar");
+			exit(1);
+		}
+		if(exp2.type == scalar){
+			dest.type = coScalar;
+			dest.indx = -1;	
+			dest.size = 0;						
+			printf("\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
+		}else if(exp2.type == coScalar){
+			dest.type = coScalar;
+			dest.indx = -1;
+			dest.size = 0;	
+			printf("\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+		}else if(exp2.type == vector){
+			dest.type = coVector;
+			dest.indx = -1;
+			dest.size = exp2.size;	
+			printf("\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
+			printf("\t for(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
+			printf("\t\te%d[i] = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+			printf("\t}\n");
+		}else if(exp2.type == coVector){
+			dest.type = coVector;
+			dest.indx = -1;	
+			dest.size = exp2.size;
+			printf("\tint e%d[%d];\n", dest.ecounter, exp2.size);
+			printf("\t for(int i = 0; i < %d; i++){\n", exp2.size);
+			printf("\t\te%d[i] = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+			printf("\t}\n");
+		}
+	}else if(exp1.type == vector){
 
+	}else if(exp1.type == coVector){
+		
+	}else if(exp1.type == coScalar){
+		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
+			yyerror("not valid operand for scalar");
+			exit(1);
+		}
+	}
+	return dest;
 }
 
 int main (void) {

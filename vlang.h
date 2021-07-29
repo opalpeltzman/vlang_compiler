@@ -40,4 +40,5 @@ typedef struct
     int indx;
     conType type;
     int ecounter;
+    int size;
 } expression;
