@@ -1977,7 +1977,6 @@ expression printExp(expression exp1, char* oper, expression exp2){
 			dest.type = coVector;
 			dest.indx = -1;
 			dest.size = symbols[exp2.indx].size;
-			printf("vec size: %d", exp2.size);	
 			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
 			fprintf(yyout,"\t\te%d[i] = %s %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
@@ -2005,7 +2004,6 @@ expression printExp(expression exp1, char* oper, expression exp2){
 		}else if(exp2.type == vector){
 			dest.type = coVector;
 			dest.size = symbols[exp2.indx].size;
-			printf("vector size: %d\n", exp2.size);	
 			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
 			fprintf(yyout,"\t\te%d[i] = e%d %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
@@ -2017,10 +2015,40 @@ expression printExp(expression exp1, char* oper, expression exp2){
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
 			fprintf(yyout,"\t\te%d[i] = e%d %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
 		}
-	}else if(exp1.type == vector){
-		
-	}else if(exp1.type == coVector){
-		
+	}else if(exp1.type == vector){								/* handle vector exp1 */
+		dest.type = coVector;
+		dest.size = symbols[exp1.indx].size;
+		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp1.indx].size);
+		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp1.indx].size);
+		if(exp2.type == scalar){						
+			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
+		}else if(exp2.type == coScalar){
+			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+		}else if(exp2.type == vector && symbols[exp1.indx].size == symbols[exp2.indx].size){
+			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
+		}else if(exp2.type == coVector && symbols[exp1.indx].size == exp2.size){
+			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+		}else{
+			yyerror("vector sizes does not match");
+        	exit(1);
+		}
+	}else if(exp1.type == coVector){							/* handle const vector exp1 */
+		dest.type = coVector;
+		dest.size = exp1.size;
+		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp1.size);
+		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp1.size);
+		if(exp2.type == scalar){						
+			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s;\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
+		}else if(exp2.type == coScalar){
+			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d;\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+		}else if(exp2.type == vector && exp1.size == symbols[exp2.indx].size){
+			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
+		}else if(exp2.type == coVector && exp1.size == exp2.size){
+			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+		}else{
+			yyerror("vector sizes does not match");
+        	exit(1);
+		}
 	}
 	return dest;
 }
@@ -2068,7 +2096,7 @@ int main (void) {
 
 	printFileInitialize(yyout);
 	return yyparse();
-	fprintf(yyout, "\nreturn 0;\n}");
+	fprintf(yyout, "\n\treturn 0;\n}");
 }
 
 void yyerror(char *s){

@@ -3,31 +3,19 @@
 
 int main(void)
 {
-	int v[2];
-	int e0[] = {3,3};
-	memcpy(v, e0, sizeof(v));
-	int s;
-	int e1 = 9;
-	s = e1;
-	int d[2];
-	int e2 = 5;
-	int e3 = 5;
-	int e4 = e2 * e3;
-	int e5[2];
-	for(int i = 0; i < 2; i++){
-		e5[i] = e4 + v[i];
-	}
-	memcpy(d, e5, sizeof(d));
-	int e6 = 4;
-	int e7[2];
-	for(int i = 0; i < 2; i++){
-		e7[i] = s / v[i];
-	}
+	int w;
+	int e0 = 3;
+	int e1 = 8;
+	int e2 = e0 * e1;
+	int e3 = 9;
+	int e4 = e2 - e3;
+	w = e4;
+	int l;
+	int e5 = 3;
+	int e6 = w / e5;
+	l = e6;
+	int e7[] = {1,2};
 	int e8[2];
 	for(int i = 0; i < 2; i++){
-		e8[i] = e6 + e7[i];
+		e8[i] = w / e7[i];
 	}
-	memcpy(d, e8, sizeof(d));
-
-return 0;
-}
