@@ -5,10 +5,11 @@
 #include <string.h>
 #include "vlang.h"
 
-
-
 void yyerror(char *s);
 int yylex();
+
+extern FILE* yyin;
+extern FILE * yyout;
 
 int ecounter=0;
 nodeType symbols[SYMSIZE];						/* Symbol table */
@@ -69,8 +70,8 @@ expression printAssign(char* var, expression exp);					/* print assignment */
 
 line    	: assignment ';'				{ecounter=0;}	
 			| line assignment ';'			{;}
-			| exit_command ';'				{exit(EXIT_SUCCESS);}
-			| line exit_command ';'			{exit(EXIT_SUCCESS);}
+			| exit_command ';'				{fprintf(yyout, "\nreturn 0;\n}");exit(EXIT_SUCCESS);}
+			| line exit_command ';'			{fprintf(yyout, "\nreturn 0;\n}");exit(EXIT_SUCCESS);}
 			| def ';'						{;}
 			| line def ';'					{;}			
 			| statement ';'					{;}
@@ -92,8 +93,8 @@ exp    		: term                  		{$$ = printTerm($1);}
 term   		: number                		{$$ = constsSclUpdate($1);}
 			| constVector					{$$ = constsVecUpdate($1);}
 			| identifier					{$$ = getSymIndex($1, GET);} 
-def			: scl identifier				{printf("\tint %s;\n", $2); setSymbolTable($2, scalar, 0);}
-			| vec identifier vecSize		{printf("\tint %s[%d];\n", $2, $3); setSymbolTable($2, vector, $3);}
+def			: scl identifier				{fprintf(yyout, "\tint %s;\n", $2); setSymbolTable($2, scalar, 0);}
+			| vec identifier vecSize		{fprintf(yyout, "\tint %s[%d];\n", $2, $3); setSymbolTable($2, vector, $3);}
         	;
 
 
@@ -135,8 +136,6 @@ void setSymbolTable(char *vName, conType type, int size){
 	symbols[sIndex].size = size;
 	symbols[sIndex].indx = sIndex;
 	strcpy(symbols[sIndex].name, vName);
-
-	// printf("type: %d, size: %d, index: %d, name: %s\n", symbols[sIndex].type, symbols[sIndex].size, symbols[sIndex].indx, symbols[sIndex].name);
 }
 
 expression getSymIndex(char *name, char mode){
@@ -151,7 +150,6 @@ expression getSymIndex(char *name, char mode){
 	dest.type = symbols[sIndex].type;
 	dest.ecounter = -1;
 	dest.size = symbols[sIndex].size;
-	// printf("sIndex: %d array type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
 	return dest;
 }
 
@@ -176,14 +174,10 @@ expression constsVecUpdate(char* value){
 	count ++;
 	ConstVecArray[vecIndxCount].size = count;
 	strcpy(ConstVecArray[vecIndxCount].val, value);
-	// printf("count: %d\n", count);
 	dest.indx = vecIndxCount;
 	dest.type = coVector;
 	dest.ecounter = -1;
 	dest.size = count;
-	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
-	// printf("value: %s\n", ConstVecArray[vecIndxCount].val);
-	// printf("vector size: %d\n", ConstVecArray[vecIndxCount].size);
 	return dest;
 }
 
@@ -197,8 +191,6 @@ expression constsSclUpdate(int value){
 	dest.type = coScalar;
 	dest.ecounter = -1;
 	dest.size = 0;
-	// printf("sIndex: %d type: %d term counter: %d\n", dest.indx, dest.type, dest.ecounter);
-	// printf("value: %d\n", ConstSclArray[sclIndxCount].val);
 	return dest;
 }
 
@@ -208,27 +200,17 @@ expression printTerm(expression term){
 	exp.indx = term.indx;
 
 	/* print term */
-	if(term.type == vector){
-		// printf("\tint e%d[%d];\n", exp.ecounter, symbols[exp.indx].size);
-		// printf("\tmemcpy(e%d, %s, sizeof(%s));\n", exp.ecounter, symbols[exp.indx].name, symbols[exp.indx].name);
-		exp.ecounter = -1;
-		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
-	}
-	else if(term.type == scalar){
-		// printf("\te%d = %s\n", exp.ecounter, symbols[exp.indx].name);
-		exp.ecounter = -1;
-	}
+	if(term.type == vector){exp.ecounter = -1; exp.size = symbols[term.indx].size;;}
+	else if(term.type == scalar){exp.ecounter = -1; exp.size = 0;}
 	else if(term.type == coVector){
 		exp.ecounter = ecounter;
-		printf("\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
+		fprintf(yyout, "\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
 		ecounter++;
-		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
 	else if(term.type == coScalar){
 		exp.ecounter = ecounter;
-		printf("\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
+		fprintf(yyout, "\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
 		ecounter++;
-		// printf("sIndex: %d type: %d exp counter: %d\n", exp.indx, exp.type, exp.ecounter);
 	}
 	return exp;
 }
@@ -248,32 +230,30 @@ expression printAssign(char* var, expression exp){
 	
 	if(symbols[sIndex].type == scalar){			/* scalar handling */
 		if(exp.type == scalar){
-			printf("\t%s = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
+			fprintf(yyout, "\t%s = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
 		}else if(exp.type == coScalar){
-			printf("\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
+			fprintf(yyout, "\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
 		}else{
 			yyerror("scalar can't be equal to vector");
 			exit(1);
 		}
 	}else if(symbols[sIndex].type == vector){	/* vector handling */
 		if(exp.type == scalar){
-			printf("\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			printf("\t\t%s[i] = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
-			printf("\t}\n");
+			fprintf(yyout, "\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			fprintf(yyout, "\t	%s[i] = %s;\n\t}\n", symbols[sIndex].name, symbols[exp.indx].name);
 		}else if(exp.type == coScalar){
-			printf("\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			printf("\t\t%s[i] = e%d;\n", symbols[sIndex].name, exp.ecounter);
-			printf("\t}\n");
+			fprintf(yyout,"\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			fprintf(yyout,"\t	%s[i] = e%d;\n\t}\n", symbols[sIndex].name, exp.ecounter);
 		}else if(exp.type == vector){
 			if(symbols[sIndex].size == symbols[exp.indx].size){
-				printf("\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
+				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
 			}else{
 				yyerror("can't assigned different sizes");
 				exit(1);
 			}
 		}else if(exp.type == coVector){
 			if(symbols[sIndex].size == exp.size){
-				printf("\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
+				fprintf(yyout,"\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
 			}else{
 				yyerror("can't assigned different sizes");
 				exit(1);
@@ -292,6 +272,7 @@ expression printAssign(char* var, expression exp){
 expression printExp(expression exp1, char* oper, expression exp2){
 	expression dest;
 	dest.ecounter = ecounter++;
+	dest.indx = -1;	
 	if(exp1.type == scalar){									/* handle scalar exp1 */
 		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
 			yyerror("not valid operand for scalar");
@@ -301,82 +282,106 @@ expression printExp(expression exp1, char* oper, expression exp2){
 			dest.type = coScalar;
 			dest.indx = -1;	
 			dest.size = 0;						
-			printf("\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
+			fprintf(yyout,"\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
 		}else if(exp2.type == coScalar){
 			dest.type = coScalar;
 			dest.indx = -1;
 			dest.size = 0;	
-			printf("\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+			fprintf(yyout,"\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
 		}else if(exp2.type == vector){
 			dest.type = coVector;
 			dest.indx = -1;
-			dest.size = exp2.size;	
-			printf("\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			printf("\t for(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			printf("\t\te%d[i] = %s %s e%d[i];\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-			printf("\t}\n");
+			dest.size = symbols[exp2.indx].size;
+			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
+			fprintf(yyout,"\t\te%d[i] = %s %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
 		}else if(exp2.type == coVector){
 			dest.type = coVector;
 			dest.indx = -1;	
 			dest.size = exp2.size;
-			printf("\tint e%d[%d];\n", dest.ecounter, exp2.size);
-			printf("\t for(int i = 0; i < %d; i++){\n", exp2.size);
-			printf("\t\te%d[i] = %s %s e%d[i];\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-			printf("\t}\n");
+			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
+			fprintf(yyout,"\t\te%d[i] = %s %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
 		}
-	}else if(exp1.type == vector){
-
-	}else if(exp1.type == coVector){
-		
-	}else if(exp1.type == coScalar){								/* handle const scalar exp1 */
+	}else if(exp1.type == coScalar){							/* handle const scalar exp1 */
 		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
 			yyerror("not valid operand for scalar");
 			exit(1);
 		}
 		if(exp2.type == scalar){
 			dest.type = coScalar;
-			dest.indx = -1;	
 			dest.size = 0;						
-			printf("\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
+			fprintf(yyout,"\tint e%d = e%d %s %s;\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
 		}else if(exp2.type == coScalar){
 			dest.type = coScalar;
-			dest.indx = -1;
 			dest.size = 0;	
-			printf("\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
+			fprintf(yyout,"\tint e%d = e%d %s e%d;\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
 		}else if(exp2.type == vector){
 			dest.type = coVector;
-			dest.indx = -1;
-			dest.size = exp2.size;	
-			printf("\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			printf("\t for(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			printf("\t\te%d[i] = %s %s e%d[i];\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-			printf("\t}\n");
+			dest.size = symbols[exp2.indx].size;
+			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
+			fprintf(yyout,"\t\te%d[i] = e%d %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
 		}else if(exp2.type == coVector){
 			dest.type = coVector;
-			dest.indx = -1;	
 			dest.size = exp2.size;
-			printf("\tint e%d[%d];\n", dest.ecounter, exp2.size);
-			printf("\t for(int i = 0; i < %d; i++){\n", exp2.size);
-			printf("\t\te%d[i] = %s %s e%d[i];\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-			printf("\t}\n");
+			printf("vector size: %d\n", exp2.size);
+			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
+			fprintf(yyout,"\t\te%d[i] = e%d %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
 		}
+	}else if(exp1.type == vector){
+		
+	}else if(exp1.type == coVector){
+		
 	}
 	return dest;
 }
 
-int main (void) {
-	/* init symbol, vec and scl tables */
-	// memset(symbols, 0, sizeof(SYMSIZE));
-	// memset(ConstVecArray, 0, sizeof(SYMSIZE));
-	// memset(ConstSclArray, 0, sizeof(SYMSIZE));
+void printFileInitialize(FILE * out){
+	fprintf(out, "#include <stdio.h>\n#include <stdlib.h>\n");
 
+	/* main function  */
+	fprintf(out , "\nint main(void)\n{\n");
+}
+
+int main (void) {
+	// if(_argc==2 || _argc == 3)
+    //  {
+   	// 	yyin = fopen(_argv[1], "r");
+   	// 	if(!yyin)
+   	// 	{
+   	// 	 	fprintf(stderr, "can't read file %s\n", _argv[1]);
+   	// 	 	return 1;
+   	// 	}
+
+	// 	 if(_argc == 3){
+	// 	 	yyout = fopen(_argv[2], "w");
+    //      	if(!yyout)
+    //      	{
+    //      	    fprintf(stderr, "can't read file %s\n", _argv[2]);
+    //      	    return 1;
+    //      	}
+	// 	}
+    //  }
+	if(_argc==2){
+		yyout = fopen(_argv[1], "w");
+		if(!yyout)
+         	{
+         	    fprintf(stderr, "can't read file %s\n", _argv[2]);
+         	    return 1;
+         	}
+	}
 	/* Initialize variable table */
     for (int i = 0; i < SYMSIZE; i++) strcpy(vars[i], "-1");
 
 	vecIndxCount = -1;
 	sclIndxCount = -1;
 	ecounter=0;
+
+	printFileInitialize(yyout);
 	return yyparse();
+	fprintf(yyout, "\n\treturn 0;\n}");
 }
 
 void yyerror(char *s){

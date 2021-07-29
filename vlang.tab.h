@@ -57,7 +57,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 39 "vlang.y"
+#line 40 "vlang.y"
 
 	int size;
 	int num;
