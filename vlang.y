@@ -11,7 +11,9 @@ int yylex();
 extern FILE* yyin;
 extern FILE * yyout;
 
-int ecounter=0;
+int ecounter=0;									/* counter for temp exp */
+int expArray=1;									/* counter for comma table */
+expression commaArray[VECLEN];					/* comma expression table */
 nodeType symbols[SYMSIZE];						/* Symbol table */
 char vars[SYMSIZE][IDLEN];  					/* Variable table: for mapping variables to symbol table */
 
@@ -31,6 +33,9 @@ expression constsSclUpdate(int value);							/* update const scalar table */
 
 /* print functions */
 void printFileInitialize();											/* prepare C file */
+void printPrintStat(expression exp);								/* check if comma and send to print print statement */
+void printPrint(expression exp);									/* print print statement */
+void commaExp(expression exp1, expression exp2);					/* handle exp, exp statement */
 expression printTerm(expression term);								/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);	/* print expression */
 expression printAssign(char* var, expression exp);					/* print assignment */
@@ -57,12 +62,14 @@ expression printAssign(char* var, expression exp);					/* print assignment */
 %token <elem> constVector
 
 %type <expr> term
-%type <expr> line exp assignment
+%type <expr> line exp assignment 
 
 %right '='
+%left ','
 %left '+' '-'
 %left '*' '/'
 %left '.' ':'
+%left '(' ')'
 
 %%
 
@@ -70,8 +77,8 @@ expression printAssign(char* var, expression exp);					/* print assignment */
 
 line    	: assignment ';'				{ecounter=0;}	
 			| line assignment ';'			{;}
-			| exit_command ';'				{fprintf(yyout, "\nreturn 0;\n}");exit(EXIT_SUCCESS);}
-			| line exit_command ';'			{fprintf(yyout, "\nreturn 0;\n}");exit(EXIT_SUCCESS);}
+			| exit_command ';'				{fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);}
+			| line exit_command ';'			{fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);}
 			| def ';'						{;}
 			| line def ';'					{;}			
 			| statement ';'					{;}
@@ -80,7 +87,7 @@ line    	: assignment ';'				{ecounter=0;}
 assignment  : identifier '=' exp  			{$$ = printAssign($1, $3);}
 			;
 statement	: exp							{;} 
-			| print exp	';'					{;}				
+			| print exp						{printPrintStat($2);}				
 exp    		: term                  		{$$ = printTerm($1);}
        		| exp '+' exp					{$$ = printExp($1, "+", $3);}
 			| exp '-' exp					{$$ = printExp($1, "-", $3);}
@@ -88,7 +95,8 @@ exp    		: term                  		{$$ = printTerm($1);}
 			| exp '/' exp					{$$ = printExp($1, "/", $3);}
 			| exp '.' exp					{$$ = printExp($1, ".", $3);}
 			| exp ':' exp					{$$ = printExp($1, ":", $3);}
-			| '(' exp ')'					{;}
+			| '(' exp ')'					{$$ = $2;}
+			| exp ',' exp					{$$ =  $3; commaExp($1, $3);}
        		;
 term   		: number                		{$$ = constsSclUpdate($1);}
 			| constVector					{$$ = constsVecUpdate($1);}
@@ -100,8 +108,8 @@ def			: scl identifier				{fprintf(yyout, "\tint %s;\n", $2); setSymbolTable($2,
 
 %%                     /* C code */
 
-int variablesIndex(char *name, char mode){
-    /* variable index in symbol table */
+/* variable index in symbol table */
+int variablesIndex(char *name, char mode){ 
     switch (mode) {
         case GET:       /* Return index of variable from symbol table */
         {
@@ -125,8 +133,8 @@ int variablesIndex(char *name, char mode){
     }
 }
 
+/* update variable in symbol table */
 void setSymbolTable(char *vName, conType type, int size){
-	/* update variable in symbol table */
 	int sIndex = variablesIndex(vName, SET);
     if(sIndex == -1) {
         yyerror("failed to initialize variable");
@@ -138,8 +146,9 @@ void setSymbolTable(char *vName, conType type, int size){
 	strcpy(symbols[sIndex].name, vName);
 }
 
+/* Returns the variable index from symbol table */
 expression getSymIndex(char *name, char mode){
-	/* Returns the variable index from symbol table */
+	
 	expression dest;
 	int sIndex = variablesIndex(name, mode);
     if(sIndex == -1) {
@@ -153,6 +162,7 @@ expression getSymIndex(char *name, char mode){
 	return dest;
 }
 
+/* update const vector table */
 expression constsVecUpdate(char* value){	
 	expression dest;
 	vecIndxCount ++;
@@ -181,6 +191,7 @@ expression constsVecUpdate(char* value){
 	return dest;
 }
 
+/* update const scalar table */
 expression constsSclUpdate(int value){
 	expression dest;
 	sclIndxCount ++;
@@ -194,6 +205,7 @@ expression constsSclUpdate(int value){
 	return dest;
 }
 
+/* print terms */
 expression printTerm(expression term){
 	expression exp;
 	exp.type = term.type;
@@ -215,6 +227,7 @@ expression printTerm(expression term){
 	return exp;
 }
 
+/* print assignment */
 expression printAssign(char* var, expression exp){
 	/* possible assignments: s=s v=constV v=v v=s v=constS */
 	expression dest;
@@ -239,11 +252,11 @@ expression printAssign(char* var, expression exp){
 		}
 	}else if(symbols[sIndex].type == vector){	/* vector handling */
 		if(exp.type == scalar){
-			fprintf(yyout, "\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout, "\t	%s[i] = %s;\n\t}\n", symbols[sIndex].name, symbols[exp.indx].name);
+			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			fprintf(yyout, "\t\t%s[i] = %s;\n\t}\n", symbols[sIndex].name, symbols[exp.indx].name);
 		}else if(exp.type == coScalar){
-			fprintf(yyout,"\t for(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout,"\t	%s[i] = e%d;\n\t}\n", symbols[sIndex].name, exp.ecounter);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
+			fprintf(yyout,"\t\t%s[i] = e%d;\n\t}\n", symbols[sIndex].name, exp.ecounter);
 		}else if(exp.type == vector){
 			if(symbols[sIndex].size == symbols[exp.indx].size){
 				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
@@ -269,6 +282,7 @@ expression printAssign(char* var, expression exp){
 	return dest;
 }
 
+/* print expressions */
 expression printExp(expression exp1, char* oper, expression exp2){
 	expression dest;
 	dest.ecounter = ecounter++;
@@ -325,7 +339,6 @@ expression printExp(expression exp1, char* oper, expression exp2){
 		}else if(exp2.type == coVector){
 			dest.type = coVector;
 			dest.size = exp2.size;
-			printf("vector size: %d\n", exp2.size);
 			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
 			fprintf(yyout,"\t\te%d[i] = e%d %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
@@ -347,7 +360,7 @@ expression printExp(expression exp1, char* oper, expression exp2){
 			yyerror("vector sizes does not match");
         	exit(1);
 		}
-	}else if(exp1.type == coVector){							/* handle const vector exp1 */
+	}else if(exp1.type == coVector){						    /* handle const vector exp1 */
 		dest.type = coVector;
 		dest.size = exp1.size;
 		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp1.size);
@@ -368,8 +381,42 @@ expression printExp(expression exp1, char* oper, expression exp2){
 	return dest;
 }
 
+void printPrintStat(expression exp){
+	/* check if comma and send to print print statement */
+	if(expArray > 1){
+		for(int i=0; i < expArray - 1; i++){printPrint(commaArray[i]); fprintf(yyout,"\tprintf(\":\\n\");\n");}
+		printPrint(commaArray[expArray - 1]);
+	}else{
+		printPrint(exp);
+	}
+	expArray = 1;
+}
+
+void printPrint(expression exp){
+	/* print print statement */
+	if(exp.type == vector || exp.type == coVector){
+		fprintf(yyout,"\tprintf(\"[\");\n");
+		fprintf(yyout,"\tfor(int i = 0; i < %d - 1; i++){\n", exp.size);
+		if(exp.type == vector){fprintf(yyout,"\t\tprintf(\"%%d,\", %s[i]);\n\t}\n\tprintf(\"%%d\", %s[%d - 1]);\n", symbols[exp.indx].name, symbols[exp.indx].name, exp.size);}
+		if(exp.type == coVector){fprintf(yyout,"\t\tprintf(\"%%d,\",e%d[i]);\n\t}\n\tprintf(\"%%d\", e%d[%d - 1]);\n", exp.ecounter, exp.ecounter, exp.size);}
+		fprintf(yyout,"\tprintf(\"]\\n\");\n");
+
+	}else if(exp.type == scalar){
+		fprintf(yyout,"\tprintf(\"%%d\\n\", %s);\n", symbols[exp.indx].name);
+	}else if(exp.type == coScalar){
+		fprintf(yyout,"\tprintf(\"%%d\\n\", e%d);\n", exp.ecounter);
+	}
+}
+
+void commaExp(expression exp1, expression exp2){
+	commaArray[expArray -1] = exp1;
+	expArray++;
+	commaArray[expArray -1] = exp2;
+}
+
+/* prepare C file */
 void printFileInitialize(FILE * out){
-	fprintf(out, "#include <stdio.h>\n#include <stdlib.h>\n");
+	fprintf(out, "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n");
 
 	/* main function  */
 	fprintf(out , "\nint main(void)\n{\n");

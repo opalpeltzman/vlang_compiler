@@ -30,6 +30,9 @@ vecSize         [{][0-9]+[}]
 ":"                                 {return yytext[0];}
 "{"                                 {return yytext[0];}
 "}"                                 {return yytext[0];}
+"("                                 {return yytext[0];}
+")"                                 {return yytext[0];}
+","                                 {return yytext[0];}
 [ \t\n]                             ;
 .                                   {ECHO; yyerror ("unexpected character");}
 

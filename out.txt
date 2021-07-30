@@ -1,21 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void)
 {
-	int w;
-	int e0 = 3;
-	int e1 = 8;
-	int e2 = e0 * e1;
-	int e3 = 9;
-	int e4 = e2 - e3;
-	w = e4;
-	int l;
-	int e5 = 3;
-	int e6 = w / e5;
-	l = e6;
-	int e7[] = {1,2};
-	int e8[2];
-	for(int i = 0; i < 2; i++){
-		e8[i] = w / e7[i];
+	int v[2];
+	int c;
+	int e0 = 9;
+	c = e0;
+	 for(int i = 0; i < 2; i++){
+		v[i] = c;
 	}
+	int e1 = 4;
+	printf("[");
+	for(int i = 0; i < 2 - 1; i++){
+		printf("%d,", v[i]);
+	}
+	printf("%d", v[2 - 1]);
+	printf("]\n");
+	printf(":\n");
+	printf("%d\n", c);
+	printf(":\n");
+	printf("%d\n", e1);
+	int e2[] = {1,2,56};
+	printf("[");
+	for(int i = 0; i < 3 - 1; i++){
+		printf("%d,",e2[i]);
+	}
+	printf("%d", e2[3 - 1]);
+	printf("]\n");
+	printf(":\n");
+	printf("[");
+	for(int i = 0; i < 2 - 1; i++){
+		printf("%d,", v[i]);
+	}
+	printf("%d", v[2 - 1]);
+	printf("]\n");
+
+	return 0;
+}
