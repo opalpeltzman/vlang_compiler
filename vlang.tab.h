@@ -40,13 +40,15 @@
       know about them.  */
    enum yytokentype {
      print = 258,
-     exit_command = 259,
-     scl = 260,
-     vec = 261,
-     identifier = 262,
-     vecSize = 263,
-     number = 264,
-     constVector = 265
+     if_stm = 259,
+     loop = 260,
+     exit_command = 261,
+     scl = 262,
+     vec = 263,
+     identifier = 264,
+     vecSize = 265,
+     number = 266,
+     constVector = 267
    };
 #endif
 
@@ -57,7 +59,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 46 "vlang.y"
+#line 47 "vlang.y"
 
 	int size;
 	int num;
@@ -69,7 +71,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 73 "vlang.tab.h"
+#line 75 "vlang.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

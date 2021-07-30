@@ -18,6 +18,8 @@ vecSize         [{][0-9]+[}]
 %%
 
 "print"			                    {return print;}
+"if"			                    {return if_stm;}
+"loop"			                    {return loop;}
 "exit"			                    {return exit_command;}
 "scl"                               {return scl;}
 "vec"                               {return vec;}

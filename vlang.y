@@ -36,6 +36,7 @@ void printFileInitialize();												/* prepare C file */
 void printPrintStat(expression exp);									/* check if comma and send to print print statement */
 void printPrint(expression exp);										/* print print statement */
 void commaExp(expression exp1, expression exp2);						/* handle exp, exp statement */
+void printBlocks(expression exp, char* stat);							/* handle block statements */
 expression printTerm(expression term);									/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
 expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
@@ -53,10 +54,11 @@ expression printAssign(char* var, expression exp);						/* print assignment */
 	}         									 /* type of variables */
 %start line                                      /* Yacc definitions */
 %token print
+%token if_stm loop
 %token exit_command
-
 %token scl
 %token vec
+
 %token <vName> identifier
 %token <size> vecSize
 %token <num> number
@@ -84,11 +86,17 @@ line    	: assignment ';'				{ecounter=0;}
 			| line def ';'					{;}			
 			| statement ';'					{;}
 			| line statement ';'			{;}
+			| block_stm block				{;}
+			| line block_stm block 			{;}
         	;
 assignment  : identifier '=' exp  			{$$ = printAssign($1, $3);}
 			;
 statement	: exp							{;} 
-			| print exp						{printPrintStat($2);}				
+			| print exp						{printPrintStat($2);}	
+block_stm	: if_stm exp 					{printBlocks($2, "if");}
+			| loop exp						{printBlocks($2, "loop");}
+block		: '{' line '}'					{fprintf(yyout, "\t}\n");}
+			| '{' '}'						{fprintf(yyout, "\t}\n");}
 exp    		: term                  		{$$ = printTerm($1);}
        		| exp '+' exp					{$$ = printExp($1, "+", $3);}
 			| exp '-' exp					{$$ = printExp($1, "-", $3);}
@@ -458,6 +466,19 @@ void commaExp(expression exp1, expression exp2){
 	commaArray[expArray -1] = exp1;
 	expArray++;
 	commaArray[expArray -1] = exp2;
+}
+
+/* handle block statements */
+void printBlocks(expression exp, char* stat){
+	if(strcmp(stat, "if") == 0){
+		if(exp.type == scalar){fprintf(yyout, "\tif(%s){\n", symbols[exp.indx].name);}
+		else if(exp.type == coScalar){fprintf(yyout, "\tif(e%d){\n", exp.ecounter);}
+		else{yyerror("only scalar allowed");}
+	}else if(strcmp(stat, "loop") == 0){
+		if(exp.type == scalar){fprintf(yyout, "\tfor(int i = 0; i < %s; i++){\n", symbols[exp.indx].name);}
+		else if(exp.type == coScalar){fprintf(yyout, "\tfor(int i = 0; i < e%d; i++){\n", exp.ecounter);}
+		else{yyerror("only scalar allowed");}
+	}
 }
 
 /* prepare C file */
