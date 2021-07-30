@@ -32,13 +32,14 @@ expression constsVecUpdate(char* value);						/* update const vector table */
 expression constsSclUpdate(int value);							/* update const scalar table */
 
 /* print functions */
-void printFileInitialize();											/* prepare C file */
-void printPrintStat(expression exp);								/* check if comma and send to print print statement */
-void printPrint(expression exp);									/* print print statement */
-void commaExp(expression exp1, expression exp2);					/* handle exp, exp statement */
-expression printTerm(expression term);								/* print term */
-expression printExp(expression exp1, char* oper, expression exp2);	/* print expression */
-expression printAssign(char* var, expression exp);					/* print assignment */
+void printFileInitialize();												/* prepare C file */
+void printPrintStat(expression exp);									/* check if comma and send to print print statement */
+void printPrint(expression exp);										/* print print statement */
+void commaExp(expression exp1, expression exp2);						/* handle exp, exp statement */
+expression printTerm(expression term);									/* print term */
+expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
+expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
+expression printAssign(char* var, expression exp);						/* print assignment */
 
 %}
 
@@ -93,8 +94,8 @@ exp    		: term                  		{$$ = printTerm($1);}
 			| exp '-' exp					{$$ = printExp($1, "-", $3);}
 			| exp '*' exp					{$$ = printExp($1, "*", $3);}
 			| exp '/' exp					{$$ = printExp($1, "/", $3);}
-			| exp '.' exp					{$$ = printExp($1, ".", $3);}
-			| exp ':' exp					{$$ = printExp($1, ":", $3);}
+			| exp '.' exp					{$$ = printVecExp($1, ".", $3);}
+			| exp ':' exp					{$$ = printVecExp($1, ":", $3);}
 			| '(' exp ')'					{$$ = $2;}
 			| exp ',' exp					{$$ =  $3; commaExp($1, $3);}
        		;
@@ -137,9 +138,7 @@ int variablesIndex(char *name, char mode){
 void setSymbolTable(char *vName, conType type, int size){
 	int sIndex = variablesIndex(vName, SET);
     if(sIndex == -1) {
-        yyerror("failed to initialize variable");
-        exit(1);
-    }
+        yyerror("failed to initialize variable");}
 	symbols[sIndex].type = type;
 	symbols[sIndex].size = size;
 	symbols[sIndex].indx = sIndex;
@@ -152,9 +151,7 @@ expression getSymIndex(char *name, char mode){
 	expression dest;
 	int sIndex = variablesIndex(name, mode);
     if(sIndex == -1) {
-        yyerror("variable not initialized");
-        exit(1);
-    }
+        yyerror("variable does not exist");}
 	dest.indx = sIndex;
 	dest.type = symbols[sIndex].type;
 	dest.ecounter = -1;
@@ -233,9 +230,7 @@ expression printAssign(char* var, expression exp){
 	expression dest;
 	int sIndex = variablesIndex(var, GET);
     if(sIndex == -1) {
-        yyerror("variable not initialized");
-        exit(1);
-    }
+        yyerror("variable not initialized");}
 	/* update returned expression */
 	dest.type = symbols[sIndex].type;
 	dest.indx = sIndex;
@@ -247,9 +242,7 @@ expression printAssign(char* var, expression exp){
 		}else if(exp.type == coScalar){
 			fprintf(yyout, "\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
 		}else{
-			yyerror("scalar can't be equal to vector");
-			exit(1);
-		}
+			yyerror("scalar can't be equal to vector");}
 	}else if(symbols[sIndex].type == vector){	/* vector handling */
 		if(exp.type == scalar){
 			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
@@ -261,24 +254,16 @@ expression printAssign(char* var, expression exp){
 			if(symbols[sIndex].size == symbols[exp.indx].size){
 				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
 			}else{
-				yyerror("can't assigned different sizes");
-				exit(1);
-			}
+				yyerror("can't assigned different sizes");}
 		}else if(exp.type == coVector){
 			if(symbols[sIndex].size == exp.size){
 				fprintf(yyout,"\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
 			}else{
-				yyerror("can't assigned different sizes");
-				exit(1);
-			}
+				yyerror("can't assigned different sizes");}
 		}else{
-			yyerror("wrong input when assigned vector");
-			exit(1);
-		}	
+			yyerror("wrong input when assigned vector");}	
 	}else{										/* error */
-			yyerror("not valid identifier");
-			exit(1);
-		}
+			yyerror("not valid identifier");}
 	return dest;
 }
 
@@ -289,9 +274,7 @@ expression printExp(expression exp1, char* oper, expression exp2){
 	dest.indx = -1;	
 	if(exp1.type == scalar){									/* handle scalar exp1 */
 		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");
-			exit(1);
-		}
+			yyerror("not valid operand for scalar");}
 		if(exp2.type == scalar){
 			dest.type = coScalar;
 			dest.indx = -1;	
@@ -319,9 +302,7 @@ expression printExp(expression exp1, char* oper, expression exp2){
 		}
 	}else if(exp1.type == coScalar){							/* handle const scalar exp1 */
 		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");
-			exit(1);
-		}
+			yyerror("not valid operand for scalar");}
 		if(exp2.type == scalar){
 			dest.type = coScalar;
 			dest.size = 0;						
@@ -357,9 +338,7 @@ expression printExp(expression exp1, char* oper, expression exp2){
 		}else if(exp2.type == coVector && symbols[exp1.indx].size == exp2.size){
 			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
 		}else{
-			yyerror("vector sizes does not match");
-        	exit(1);
-		}
+			yyerror("vector sizes does not match");}
 	}else if(exp1.type == coVector){						    /* handle const vector exp1 */
 		dest.type = coVector;
 		dest.size = exp1.size;
@@ -374,15 +353,80 @@ expression printExp(expression exp1, char* oper, expression exp2){
 		}else if(exp2.type == coVector && exp1.size == exp2.size){
 			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
 		}else{
-			yyerror("vector sizes does not match");
-        	exit(1);
-		}
+			yyerror("vector sizes does not match");}
 	}
 	return dest;
 }
 
+/* print only vector expression */
+expression printVecExp(expression exp1, char* oper, expression exp2){
+	if(exp1.type == scalar || exp1.type == coScalar){yyerror("not valid operand for scalar");}
+	expression dest;
+	dest.ecounter = ecounter++;
+	dest.indx = -1;	
+	if(strcmp(oper, ".") == 0){
+		if(exp2.type == scalar || exp2.type == coScalar){yyerror("not valid operand for scalar");}
+		if(exp1.size != exp2.size){yyerror("not valid operand for scalar");}
+		else{
+			dest.type = coScalar;
+			dest.size = 0;
+			fprintf(yyout,"\tint e%d = 0;\n", dest.ecounter);
+			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp1.size);
+			if(exp1.type == vector && exp2.type == vector){fprintf(yyout,"\t\te%d += %s[i] * %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, symbols[exp2.indx].name);}
+			if(exp1.type == vector && exp2.type == coVector){fprintf(yyout,"\t\te%d += %s[i] * e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, exp2.ecounter);}
+			if(exp1.type == coVector && exp2.type == vector){fprintf(yyout,"\t\te%d += e%d[i] * %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, symbols[exp2.indx].name);}
+			if(exp1.type == coVector && exp2.type == coVector){fprintf(yyout,"\t\te%d += e%d[i] * e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, exp2.ecounter);}
+		}
+	}else if(strcmp(oper, ":") == 0){
+		if(exp2.type == scalar || exp2.type == coScalar){
+			dest.type = coScalar;
+			dest.size = 0;
+			fprintf(yyout,"\tint e%d = 0;\n", dest.ecounter);
+			if(exp1.type == vector && exp2.type == scalar){
+				fprintf(yyout,"\tif(%s >= 0 && %s < %d){\n", symbols[exp2.indx].name, symbols[exp2.indx].name, exp1.size);
+				fprintf(yyout,"\t\te%d = %s[%s];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, symbols[exp2.indx].name);}
+			if(exp1.type == vector && exp2.type == coScalar){
+				fprintf(yyout,"\tif(e%d >= 0 && e%d < %d){\n", exp2.ecounter, exp2.ecounter, exp1.size);
+				fprintf(yyout,"\t\te%d = %s[e%d];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, exp2.ecounter);}
+			if(exp1.type == coVector && exp2.type == scalar){
+				fprintf(yyout,"\tif(%s >= 0 && %s < %d){\n", symbols[exp2.indx].name, symbols[exp2.indx].name, exp1.size);
+				fprintf(yyout,"\t\te%d = e%d[%s];\n\t}\n", dest.ecounter, exp1.ecounter, symbols[exp2.indx].name);}
+			if(exp1.type == coVector && exp2.type == coScalar){
+				fprintf(yyout,"\tif(e%d >= 0 && e%d < %d){\n", exp2.ecounter, exp2.ecounter, exp1.size);
+				fprintf(yyout,"\t\te%d = e%d[e%d];\n\t}\n", dest.ecounter, exp1.ecounter, exp2.ecounter);}
+			fprintf(yyout,"\telse{fprintf (stderr, \"index out of range\"); exit(0);}\n");
+		}
+		if(exp2.type == vector || exp2.type == coVector){
+			if(exp1.size != exp2.size){yyerror("not valid operation for different sizes");}
+			else{
+				dest.type = coVector;
+				dest.size = exp1.size;
+				fprintf(yyout,"\tint e%d[%d] = {0};\n", dest.ecounter, exp1.size);
+				fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp1.size);
+				if(exp1.type == vector && exp2.type == vector){
+					fprintf(yyout,"\t\tif(%s[i] >= 0 && %s[i] < %d){\n", symbols[exp2.indx].name, symbols[exp2.indx].name, exp1.size);
+					fprintf(yyout,"\t\t\te%d[i] = %s[%s[i]];\n\t\t}\n", dest.ecounter, symbols[exp1.indx].name, symbols[exp2.indx].name);}
+				if(exp1.type == vector && exp2.type == coVector){
+					fprintf(yyout,"\t\tif(e%d[i] >= 0 && e%d[i] < %d){\n", exp2.ecounter, exp2.ecounter, exp1.size);
+					fprintf(yyout,"\t\t\te%d[i] = %s[e%d[i]];\n\t\t}\n", dest.ecounter, symbols[exp1.indx].name, exp2.ecounter);}
+				if(exp1.type == coVector && exp2.type == vector){
+					fprintf(yyout,"\t\tif(%s[i] >= 0 && %s[i] < %d){\n", symbols[exp2.indx].name, symbols[exp2.indx].name, exp1.size);
+					fprintf(yyout,"\t\t\te%d[i] = e%d[%s[i]];\n\t\t}\n", dest.ecounter, exp1.ecounter, symbols[exp2.indx].name);}
+				if(exp1.type == coVector && exp2.type == coVector){
+					fprintf(yyout,"\t\tif(e%d[i] >= 0 && e%d[i] < %d){\n", exp2.ecounter, exp2.ecounter, exp1.size);
+					fprintf(yyout,"\t\t\te%d[i] = e%d[e%d[i]];\n\t\t}\n", dest.ecounter, exp1.ecounter, exp2.ecounter);}
+				fprintf(yyout,"\t\telse{fprintf (stderr, \"index out of range\"); exit(0);}\n\t}\n");
+			}
+		}
+		
+		
+	}
+	return dest;
+}
+
+/* check if comma and send to print print statement */
 void printPrintStat(expression exp){
-	/* check if comma and send to print print statement */
+	
 	if(expArray > 1){
 		for(int i=0; i < expArray - 1; i++){printPrint(commaArray[i]); fprintf(yyout,"\tprintf(\":\\n\");\n");}
 		printPrint(commaArray[expArray - 1]);
@@ -392,8 +436,9 @@ void printPrintStat(expression exp){
 	expArray = 1;
 }
 
+/* print print statement */
 void printPrint(expression exp){
-	/* print print statement */
+	
 	if(exp.type == vector || exp.type == coVector){
 		fprintf(yyout,"\tprintf(\"[\");\n");
 		fprintf(yyout,"\tfor(int i = 0; i < %d - 1; i++){\n", exp.size);
@@ -408,6 +453,7 @@ void printPrint(expression exp){
 	}
 }
 
+/* handle exp, exp statement */
 void commaExp(expression exp1, expression exp2){
 	commaArray[expArray -1] = exp1;
 	expArray++;
@@ -423,24 +469,6 @@ void printFileInitialize(FILE * out){
 }
 
 int main (void) {
-	// if(_argc==2 || _argc == 3)
-    //  {
-   	// 	yyin = fopen(_argv[1], "r");
-   	// 	if(!yyin)
-   	// 	{
-   	// 	 	fprintf(stderr, "can't read file %s\n", _argv[1]);
-   	// 	 	return 1;
-   	// 	}
-
-	// 	 if(_argc == 3){
-	// 	 	yyout = fopen(_argv[2], "w");
-    //      	if(!yyout)
-    //      	{
-    //      	    fprintf(stderr, "can't read file %s\n", _argv[2]);
-    //      	    return 1;
-    //      	}
-	// 	}
-    //  }
 	if(_argc==2){
 		yyout = fopen(_argv[1], "w");
 		if(!yyout)
@@ -463,4 +491,5 @@ int main (void) {
 
 void yyerror(char *s){
 	fprintf (stderr, "%s\n", s);
+	exit(0);
 } 
