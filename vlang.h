@@ -37,6 +37,7 @@ typedef struct
 
 typedef struct 
 {
+    char name[VECLEN];
     int indx;
     conType type;
     int ecounter;

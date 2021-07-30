@@ -11,7 +11,10 @@ int yylex();
 extern FILE* yyin;
 extern FILE * yyout;
 
-int ecounter=0;									/* counter for temp exp */
+char reserved[VECLEN] = "e";					/* reserved variables */
+char reservedIndex[IDLEN];
+int ecounter=0;									
+
 int expArray=1;									/* counter for comma table */
 expression commaArray[VECLEN];					/* comma expression table */
 nodeType symbols[SYMSIZE];						/* Symbol table */
@@ -37,6 +40,7 @@ void printPrintStat(expression exp);									/* check if comma and send to print
 void printPrint(expression exp);										/* print print statement */
 void commaExp(expression exp1, expression exp2);						/* handle exp, exp statement */
 void printBlocks(expression exp, char* stat);							/* handle block statements */
+void converToString(int count, char* result);							/* convert int to string */
 expression printTerm(expression term);									/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
 expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
@@ -164,6 +168,7 @@ expression getSymIndex(char *name, char mode){
 	dest.type = symbols[sIndex].type;
 	dest.ecounter = -1;
 	dest.size = symbols[sIndex].size;
+	strcpy(dest.name, symbols[sIndex].name);
 	return dest;
 }
 
@@ -217,15 +222,19 @@ expression printTerm(expression term){
 	exp.indx = term.indx;
 
 	/* print term */
-	if(term.type == vector){exp.ecounter = -1; exp.size = symbols[term.indx].size;;}
-	else if(term.type == scalar){exp.ecounter = -1; exp.size = 0;}
+	if(term.type == vector){exp.ecounter = -1; exp.size = term.size; strcpy(exp.name, term.name);}
+	else if(term.type == scalar){exp.ecounter = -1; exp.size = 0; strcpy(exp.name, term.name);}
 	else if(term.type == coVector){
 		exp.ecounter = ecounter;
+		converToString(exp.ecounter, exp.name);
+		exp.size = term.size;
 		fprintf(yyout, "\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
 		ecounter++;
 	}
 	else if(term.type == coScalar){
 		exp.ecounter = ecounter;
+		converToString(exp.ecounter, exp.name);
+		exp.size = term.size;
 		fprintf(yyout, "\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
 		ecounter++;
 	}
@@ -279,90 +288,33 @@ expression printAssign(char* var, expression exp){
 expression printExp(expression exp1, char* oper, expression exp2){
 	expression dest;
 	dest.ecounter = ecounter++;
+	converToString(dest.ecounter, dest.name);
 	dest.indx = -1;	
-	if(exp1.type == scalar){									/* handle scalar exp1 */
-		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");}
-		if(exp2.type == scalar){
-			dest.type = coScalar;
-			dest.indx = -1;	
-			dest.size = 0;						
-			fprintf(yyout,"\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			dest.type = coScalar;
-			dest.indx = -1;
-			dest.size = 0;	
-			fprintf(yyout,"\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else if(exp2.type == vector){
-			dest.type = coVector;
-			dest.indx = -1;
-			dest.size = symbols[exp2.indx].size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			fprintf(yyout,"\t\te%d[i] = %s %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector){
-			dest.type = coVector;
-			dest.indx = -1;	
-			dest.size = exp2.size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
-			fprintf(yyout,"\t\te%d[i] = %s %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}
-	}else if(exp1.type == coScalar){							/* handle const scalar exp1 */
-		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");}
-		if(exp2.type == scalar){
+	if(exp1.type == scalar || exp1.type == coScalar){						/* handle scalar^L */
+		if(exp2.type == scalar || exp2.type == coScalar){
 			dest.type = coScalar;
 			dest.size = 0;						
-			fprintf(yyout,"\tint e%d = e%d %s %s;\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			dest.type = coScalar;
-			dest.size = 0;	
-			fprintf(yyout,"\tint e%d = e%d %s e%d;\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
-		}else if(exp2.type == vector){
-			dest.type = coVector;
-			dest.size = symbols[exp2.indx].size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			fprintf(yyout,"\t\te%d[i] = e%d %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector){
+			fprintf(yyout,"\tint %s = %s %s %s;\n", dest.name, exp1.name, oper, exp2.name);
+		}else if(exp2.type == vector || exp2.type == coVector){
 			dest.type = coVector;
 			dest.size = exp2.size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
+			fprintf(yyout,"\tint %s[%d];\n", dest.name, exp2.size);
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
-			fprintf(yyout,"\t\te%d[i] = e%d %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+			fprintf(yyout,"\t\t%s[i] = %s %s %s[i];\n\t}\n", dest.name, exp1.name, oper, exp2.name);
 		}
-	}else if(exp1.type == vector){								/* handle vector exp1 */
-		dest.type = coVector;
-		dest.size = symbols[exp1.indx].size;
-		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp1.indx].size);
-		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp1.indx].size);
-		if(exp2.type == scalar){						
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else if(exp2.type == vector && symbols[exp1.indx].size == symbols[exp2.indx].size){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector && symbols[exp1.indx].size == exp2.size){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else{
-			yyerror("vector sizes does not match");}
-	}else if(exp1.type == coVector){						    /* handle const vector exp1 */
+	}else if(exp1.type == vector || exp1.type == coVector){					/* handle vector^L */
 		dest.type = coVector;
 		dest.size = exp1.size;
-		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp1.size);
+		fprintf(yyout,"\tint %s[%d];\n", dest.name, exp1.size);
 		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp1.size);
-		if(exp2.type == scalar){						
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s;\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d;\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
-		}else if(exp2.type == vector && exp1.size == symbols[exp2.indx].size){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector && exp1.size == exp2.size){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+		if(exp2.type == scalar || exp2.type == coScalar){						
+			fprintf(yyout,"\t\t%s[i] = %s[i] %s %s;\n\t}\n", dest.name, exp1.name, oper, exp2.name);
+		}else if((exp2.type == vector || exp2.type == coVector) && (exp1.size == exp2.size)){
+			fprintf(yyout,"\t\t%s[i] = %s[i] %s %s[i];\n\t}\n", dest.name, exp1.name, oper, exp2.name);
 		}else{
 			yyerror("vector sizes does not match");}
-	}
+	}else{
+		yyerror("wrong variable type");}
 	return dest;
 }
 
@@ -479,6 +431,17 @@ void printBlocks(expression exp, char* stat){
 		else if(exp.type == coScalar){fprintf(yyout, "\tfor(int i = 0; i < e%d; i++){\n", exp.ecounter);}
 		else{yyerror("only scalar allowed");}
 	}
+}
+
+/* convert int to string */
+void converToString(int count, char* result){
+	char reserved[255] = "e";
+	char reservedIndex[31];
+
+	sprintf(reservedIndex, "%d", count);
+
+	strcat(reserved, reservedIndex);
+	strcpy(result, reserved);
 }
 
 /* prepare C file */

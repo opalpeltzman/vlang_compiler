@@ -82,7 +82,10 @@ int yylex();
 extern FILE* yyin;
 extern FILE * yyout;
 
-int ecounter=0;									/* counter for temp exp */
+char reserved[VECLEN] = "e";					/* reserved variables */
+char reservedIndex[IDLEN];
+int ecounter=0;									
+
 int expArray=1;									/* counter for comma table */
 expression commaArray[VECLEN];					/* comma expression table */
 nodeType symbols[SYMSIZE];						/* Symbol table */
@@ -108,6 +111,7 @@ void printPrintStat(expression exp);									/* check if comma and send to print
 void printPrint(expression exp);										/* print print statement */
 void commaExp(expression exp1, expression exp2);						/* handle exp, exp statement */
 void printBlocks(expression exp, char* stat);							/* handle block statements */
+void converToString(int count, char* result);							/* convert int to string */
 expression printTerm(expression term);									/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
 expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
@@ -116,7 +120,7 @@ expression printAssign(char* var, expression exp);						/* print assignment */
 
 
 /* Line 189 of yacc.c  */
-#line 120 "vlang.tab.c"
+#line 124 "vlang.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -163,7 +167,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 47 "vlang.y"
+#line 51 "vlang.y"
 
 	int size;
 	int num;
@@ -175,7 +179,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 179 "vlang.tab.c"
+#line 183 "vlang.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -187,7 +191,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 191 "vlang.tab.c"
+#line 195 "vlang.tab.c"
 
 #ifdef short
 # undef short
@@ -482,10 +486,10 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    81,    81,    82,    83,    84,    85,    86,    87,    88,
-      89,    90,    92,    94,    95,    96,    97,    98,    99,   100,
-     101,   102,   103,   104,   105,   106,   107,   108,   110,   111,
-     112,   113,   114
+       0,    85,    85,    86,    87,    88,    89,    90,    91,    92,
+      93,    94,    96,    98,    99,   100,   101,   102,   103,   104,
+     105,   106,   107,   108,   109,   110,   111,   112,   114,   115,
+     116,   117,   118
 };
 #endif
 
@@ -1434,224 +1438,224 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 81 "vlang.y"
+#line 85 "vlang.y"
     {ecounter=0;;}
     break;
 
   case 3:
 
 /* Line 1455 of yacc.c  */
-#line 82 "vlang.y"
+#line 86 "vlang.y"
     {;;}
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 83 "vlang.y"
+#line 87 "vlang.y"
     {fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);;}
     break;
 
   case 5:
 
 /* Line 1455 of yacc.c  */
-#line 84 "vlang.y"
+#line 88 "vlang.y"
     {fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);;}
     break;
 
   case 6:
 
 /* Line 1455 of yacc.c  */
-#line 85 "vlang.y"
+#line 89 "vlang.y"
     {;;}
     break;
 
   case 7:
 
 /* Line 1455 of yacc.c  */
-#line 86 "vlang.y"
+#line 90 "vlang.y"
     {;;}
     break;
 
   case 8:
 
 /* Line 1455 of yacc.c  */
-#line 87 "vlang.y"
+#line 91 "vlang.y"
     {;;}
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 88 "vlang.y"
+#line 92 "vlang.y"
     {;;}
     break;
 
   case 10:
 
 /* Line 1455 of yacc.c  */
-#line 89 "vlang.y"
+#line 93 "vlang.y"
     {;;}
     break;
 
   case 11:
 
 /* Line 1455 of yacc.c  */
-#line 90 "vlang.y"
+#line 94 "vlang.y"
     {;;}
     break;
 
   case 12:
 
 /* Line 1455 of yacc.c  */
-#line 92 "vlang.y"
+#line 96 "vlang.y"
     {(yyval.expr) = printAssign((yyvsp[(1) - (3)].vName), (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 13:
 
 /* Line 1455 of yacc.c  */
-#line 94 "vlang.y"
+#line 98 "vlang.y"
     {;;}
     break;
 
   case 14:
 
 /* Line 1455 of yacc.c  */
-#line 95 "vlang.y"
+#line 99 "vlang.y"
     {printPrintStat((yyvsp[(2) - (2)].expr));;}
     break;
 
   case 15:
 
 /* Line 1455 of yacc.c  */
-#line 96 "vlang.y"
+#line 100 "vlang.y"
     {printBlocks((yyvsp[(2) - (2)].expr), "if");;}
     break;
 
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 97 "vlang.y"
+#line 101 "vlang.y"
     {printBlocks((yyvsp[(2) - (2)].expr), "loop");;}
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 98 "vlang.y"
+#line 102 "vlang.y"
     {fprintf(yyout, "\t}\n");;}
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 99 "vlang.y"
+#line 103 "vlang.y"
     {fprintf(yyout, "\t}\n");;}
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 100 "vlang.y"
+#line 104 "vlang.y"
     {(yyval.expr) = printTerm((yyvsp[(1) - (1)].expr));;}
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 101 "vlang.y"
+#line 105 "vlang.y"
     {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "+", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 102 "vlang.y"
+#line 106 "vlang.y"
     {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "-", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 103 "vlang.y"
+#line 107 "vlang.y"
     {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "*", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 104 "vlang.y"
+#line 108 "vlang.y"
     {(yyval.expr) = printExp((yyvsp[(1) - (3)].expr), "/", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 105 "vlang.y"
+#line 109 "vlang.y"
     {(yyval.expr) = printVecExp((yyvsp[(1) - (3)].expr), ".", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 106 "vlang.y"
+#line 110 "vlang.y"
     {(yyval.expr) = printVecExp((yyvsp[(1) - (3)].expr), ":", (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 107 "vlang.y"
+#line 111 "vlang.y"
     {(yyval.expr) = (yyvsp[(2) - (3)].expr);;}
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 108 "vlang.y"
+#line 112 "vlang.y"
     {(yyval.expr) =  (yyvsp[(3) - (3)].expr); commaExp((yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 110 "vlang.y"
+#line 114 "vlang.y"
     {(yyval.expr) = constsSclUpdate((yyvsp[(1) - (1)].num));;}
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 111 "vlang.y"
+#line 115 "vlang.y"
     {(yyval.expr) = constsVecUpdate((yyvsp[(1) - (1)].elem));;}
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 112 "vlang.y"
+#line 116 "vlang.y"
     {(yyval.expr) = getSymIndex((yyvsp[(1) - (1)].vName), GET);;}
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 113 "vlang.y"
+#line 117 "vlang.y"
     {fprintf(yyout, "\tint %s;\n", (yyvsp[(2) - (2)].vName)); setSymbolTable((yyvsp[(2) - (2)].vName), scalar, 0);;}
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 114 "vlang.y"
+#line 118 "vlang.y"
     {fprintf(yyout, "\tint %s[%d];\n", (yyvsp[(2) - (3)].vName), (yyvsp[(3) - (3)].size)); setSymbolTable((yyvsp[(2) - (3)].vName), vector, (yyvsp[(3) - (3)].size));;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1655 "vlang.tab.c"
+#line 1659 "vlang.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1863,7 +1867,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 118 "vlang.y"
+#line 122 "vlang.y"
                      /* C code */
 
 /* variable index in symbol table */
@@ -1913,6 +1917,7 @@ expression getSymIndex(char *name, char mode){
 	dest.type = symbols[sIndex].type;
 	dest.ecounter = -1;
 	dest.size = symbols[sIndex].size;
+	strcpy(dest.name, symbols[sIndex].name);
 	return dest;
 }
 
@@ -1966,15 +1971,19 @@ expression printTerm(expression term){
 	exp.indx = term.indx;
 
 	/* print term */
-	if(term.type == vector){exp.ecounter = -1; exp.size = symbols[term.indx].size;;}
-	else if(term.type == scalar){exp.ecounter = -1; exp.size = 0;}
+	if(term.type == vector){exp.ecounter = -1; exp.size = term.size; strcpy(exp.name, term.name);}
+	else if(term.type == scalar){exp.ecounter = -1; exp.size = 0; strcpy(exp.name, term.name);}
 	else if(term.type == coVector){
 		exp.ecounter = ecounter;
+		converToString(exp.ecounter, exp.name);
+		exp.size = term.size;
 		fprintf(yyout, "\tint e%d[] = %s;\n", exp.ecounter, ConstVecArray[term.indx].val);
 		ecounter++;
 	}
 	else if(term.type == coScalar){
 		exp.ecounter = ecounter;
+		converToString(exp.ecounter, exp.name);
+		exp.size = term.size;
 		fprintf(yyout, "\tint e%d = %d;\n", exp.ecounter, ConstSclArray[term.indx].val);
 		ecounter++;
 	}
@@ -2028,87 +2037,29 @@ expression printAssign(char* var, expression exp){
 expression printExp(expression exp1, char* oper, expression exp2){
 	expression dest;
 	dest.ecounter = ecounter++;
+	converToString(dest.ecounter, dest.name);
 	dest.indx = -1;	
-	if(exp1.type == scalar){									/* handle scalar exp1 */
-		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");}
-		if(exp2.type == scalar){
-			dest.type = coScalar;
-			dest.indx = -1;	
-			dest.size = 0;						
-			fprintf(yyout,"\tint e%d = %s %s %s;\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			dest.type = coScalar;
-			dest.indx = -1;
-			dest.size = 0;	
-			fprintf(yyout,"\tint e%d = %s %s e%d;\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else if(exp2.type == vector){
-			dest.type = coVector;
-			dest.indx = -1;
-			dest.size = symbols[exp2.indx].size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			fprintf(yyout,"\t\te%d[i] = %s %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector){
-			dest.type = coVector;
-			dest.indx = -1;	
-			dest.size = exp2.size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
-			fprintf(yyout,"\t\te%d[i] = %s %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}
-	}else if(exp1.type == coScalar){							/* handle const scalar exp1 */
-		if(strcmp(oper, ":") == 0 || strcmp(oper, ".") == 0 ){
-			yyerror("not valid operand for scalar");}
-		if(exp2.type == scalar){
+	if(exp1.type == scalar || exp1.type == coScalar){						/* handle scalar^L */
+		if(exp2.type == scalar || exp2.type == coScalar){
 			dest.type = coScalar;
 			dest.size = 0;						
-			fprintf(yyout,"\tint e%d = e%d %s %s;\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			dest.type = coScalar;
-			dest.size = 0;	
-			fprintf(yyout,"\tint e%d = e%d %s e%d;\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
-		}else if(exp2.type == vector){
-			dest.type = coVector;
-			dest.size = symbols[exp2.indx].size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp2.indx].size);
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp2.indx].size);
-			fprintf(yyout,"\t\te%d[i] = e%d %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector){
+			fprintf(yyout,"\tint %s = %s %s %s;\n", dest.name, exp1.name, oper, exp2.name);
+		}else if(exp2.type == vector || exp2.type == coVector){
 			dest.type = coVector;
 			dest.size = exp2.size;
-			fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp2.size);
+			fprintf(yyout,"\tint %s[%d];\n", dest.name, exp2.size);
 			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp2.size);
-			fprintf(yyout,"\t\te%d[i] = e%d %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+			fprintf(yyout,"\t\t%s[i] = %s %s %s[i];\n\t}\n", dest.name, exp1.name, oper, exp2.name);
 		}
-	}else if(exp1.type == vector){								/* handle vector exp1 */
-		dest.type = coVector;
-		dest.size = symbols[exp1.indx].size;
-		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, symbols[exp1.indx].size);
-		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[exp1.indx].size);
-		if(exp2.type == scalar){						
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d;\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else if(exp2.type == vector && symbols[exp1.indx].size == symbols[exp2.indx].size){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s %s[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector && symbols[exp1.indx].size == exp2.size){
-			fprintf(yyout,"\t\te%d[i] = %s[i] %s e%d[i];\n\t}\n", dest.ecounter, symbols[exp1.indx].name, oper, exp2.ecounter);
-		}else{
-			yyerror("vector sizes does not match");}
-	}else if(exp1.type == coVector){						    /* handle const vector exp1 */
+	}else if(exp1.type == vector || exp1.type == coVector){					/* handle vector^L */
 		dest.type = coVector;
 		dest.size = exp1.size;
-		fprintf(yyout,"\tint e%d[%d];\n", dest.ecounter, exp1.size);
+		fprintf(yyout,"\tint %s[%d];\n", dest.name, exp1.size);
 		fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", exp1.size);
-		if(exp2.type == scalar){						
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s;\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coScalar){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d;\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
-		}else if(exp2.type == vector && exp1.size == symbols[exp2.indx].size){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s %s[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, symbols[exp2.indx].name);
-		}else if(exp2.type == coVector && exp1.size == exp2.size){
-			fprintf(yyout,"\t\te%d[i] = e%d[i] %s e%d[i];\n\t}\n", dest.ecounter, exp1.ecounter, oper, exp2.ecounter);
+		if(exp2.type == scalar || exp2.type == coScalar){						
+			fprintf(yyout,"\t\t%s[i] = %s[i] %s %s;\n\t}\n", dest.name, exp1.name, oper, exp2.name);
+		}else if((exp2.type == vector || exp2.type == coVector) && (exp1.size == exp2.size)){
+			fprintf(yyout,"\t\t%s[i] = %s[i] %s %s[i];\n\t}\n", dest.name, exp1.name, oper, exp2.name);
 		}else{
 			yyerror("vector sizes does not match");}
 	}
@@ -2228,6 +2179,17 @@ void printBlocks(expression exp, char* stat){
 		else if(exp.type == coScalar){fprintf(yyout, "\tfor(int i = 0; i < e%d; i++){\n", exp.ecounter);}
 		else{yyerror("only scalar allowed");}
 	}
+}
+
+/* convert int to string */
+void converToString(int count, char* result){
+	char reserved[255] = "e";
+	char reservedIndex[31];
+
+	sprintf(reservedIndex, "%d", count);
+
+	strcat(reserved, reservedIndex);
+	strcpy(result, reserved);
 }
 
 /* prepare C file */
