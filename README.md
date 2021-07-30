@@ -8,7 +8,8 @@ Vlang language id described in the attached Vlang.pdf file.
 ## Steps to run the compiler
 ```
 1. Run "make" command in order to generate vlang.exe (Example: make)
-2. Run the compiler using output file and input file containing vlang language/syntax  (Example: " ./vlang source.vlang out.c ")
+2. Run the compiler using output file and input file containing vlang language/syntax  
+   (Example: " ./vlang source.vlang out.c ")
 3. Compile the output C file (Example: " gcc out.c -o out.exe ")
 4. Run C file  (Example: " ./out.exe ")
 ```
