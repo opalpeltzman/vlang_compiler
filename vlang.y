@@ -82,7 +82,7 @@ expression printAssign(expression exp1, expression exp2);				/* print assignment
 
 /* descriptions of expected inputs     corresponding actions (in C) */
 
-line    	: assignment ';'				{ecounter=0;}	
+line    	: assignment ';'				{;}	
 			| line assignment ';'			{;}
 			| exit_command ';'				{fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);}
 			| line exit_command ';'			{fprintf(yyout, "\n\treturn 0;\n}");exit(EXIT_SUCCESS);}
@@ -416,11 +416,19 @@ void printFileInitialize(FILE * out){
 }
 
 int main (void) {
-	if(_argc==2){
+	if(_argc==2 || _argc== 3){
 		yyout = fopen(_argv[1], "w");
 		if(!yyout)
          	{
-         	    fprintf(stderr, "can't read file %s\n", _argv[2]);
+         	    printf("Could not open destination file '%s'\n", _argv[1]);
+         	    return 1;
+         	}
+	}
+	if(_argc==3){
+		yyin = fopen(_argv[2], "r");
+		if(!yyin)
+         	{
+         	    printf("Could not open source code from '%s'\n", _argv[2]);
          	    return 1;
          	}
 	}
@@ -432,8 +440,9 @@ int main (void) {
 	ecounter=0;
 
 	printFileInitialize(yyout);
-	return yyparse();
+	yyparse();
 	fprintf(yyout, "\n\treturn 0;\n}");
+	return 0;
 }
 
 void yyerror(char *s){

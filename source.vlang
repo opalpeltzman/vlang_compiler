@@ -1,0 +1,47 @@
+scl x;
+scl y;
+scl j;
+vec v1{6};
+vec v2{6};
+vec v3{6};
+
+x=2;
+v1 = 2*x;
+print v1;
+
+v2 = [1,1,2,2,3,3];
+
+print v1.v2;
+
+y= v2:4;
+print y;
+
+j = 0;
+loop y {
+    v1:j = j;
+    j = j + 1;
+}
+
+print v2:v1;
+print v2:v1:[5,4,3,2,1,0];
+v3 = v1+v2;
+print v3;
+print v2:([2,1,0,2,2,0].v3/10);
+
+vec a{3};
+a = [10,0,20];
+j = 0;
+loop 3 {
+    if a.[1,0,0] {
+        print j, a;
+        a = a:[2,0,1];
+    }
+    j = j+1;
+}
+
+vec z{4};
+z = 10;
+z = (z + [2,4,6,8])/2;
+z = z - 3 + [2,3,4,5];
+print z;
+print z.[1,1,1,1];
