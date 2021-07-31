@@ -44,7 +44,7 @@ void converToString(int count, char* result);							/* convert int to string */
 expression printTerm(expression term);									/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
 expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
-expression printAssign(char* var, expression exp);						/* print assignment */
+expression printAssign(expression exp1, expression exp2);				/* print assignment */
 
 %}
 
@@ -93,7 +93,7 @@ line    	: assignment ';'				{ecounter=0;}
 			| block_stm block				{;}
 			| line block_stm block 			{;}
         	;
-assignment  : identifier '=' exp  			{$$ = printAssign($1, $3);}
+assignment  : exp '=' exp  					{$$ = printAssign($1, $3);}
 			;
 statement	: exp							{;} 
 			| print exp						{printPrintStat($2);}	
@@ -242,45 +242,35 @@ expression printTerm(expression term){
 }
 
 /* print assignment */
-expression printAssign(char* var, expression exp){
-	/* possible assignments: s=s v=constV v=v v=s v=constS */
-	expression dest;
-	int sIndex = variablesIndex(var, GET);
-    if(sIndex == -1) {
-        yyerror("variable not initialized");}
-	/* update returned expression */
-	dest.type = symbols[sIndex].type;
-	dest.indx = sIndex;
-	dest.ecounter = -1;
+expression printAssign(expression exp1, expression exp2){
+	/* possible assignments for variables: s=s s=constS v=constV v=v v=s v=constS */
 	
-	if(symbols[sIndex].type == scalar){			/* scalar handling */
-		if(exp.type == scalar){
-			fprintf(yyout, "\t%s = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
-		}else if(exp.type == coScalar){
-			fprintf(yyout, "\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
+	/* update returned expression */
+	expression dest;
+	dest.indx = exp1.indx;
+	dest.size = exp1.size;
+	strcpy(dest.name, exp1.name);
+	dest.type = exp1.type;
+	dest.ecounter = exp1.ecounter;
+	
+	if(exp1.type == scalar || exp1.type == coScalar){			/* scalar handling */
+		if(exp2.type == scalar || exp2.type == coScalar){
+			fprintf(yyout, "\t%s = %s;\n", exp1.name, exp2.name);
 		}else{
 			yyerror("scalar can't be equal to vector");}
-	}else if(symbols[sIndex].type == vector){	/* vector handling */
-		if(exp.type == scalar){
-			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout, "\t\t%s[i] = %s;\n\t}\n", symbols[sIndex].name, symbols[exp.indx].name);
-		}else if(exp.type == coScalar){
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout,"\t\t%s[i] = e%d;\n\t}\n", symbols[sIndex].name, exp.ecounter);
-		}else if(exp.type == vector){
-			if(symbols[sIndex].size == symbols[exp.indx].size){
-				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
-			}else{
-				yyerror("can't assigned different sizes");}
-		}else if(exp.type == coVector){
-			if(symbols[sIndex].size == exp.size){
-				fprintf(yyout,"\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
+	}else if(exp1.type == vector || exp1.type == coVector){				/* vector handling */
+		if(exp2.type == scalar || exp2.type == coScalar){
+			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", exp1.size);
+			fprintf(yyout, "\t\t%s[i] = %s;\n\t}\n", exp1.name, exp2.name);
+		}else if(exp2.type == vector || exp2.type == coVector){
+			if(exp1.size == exp2.size){
+				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", exp1.name, exp2.name, exp1.name);
 			}else{
 				yyerror("can't assigned different sizes");}
 		}else{
 			yyerror("wrong input when assigned vector");}	
 	}else{										/* error */
-			yyerror("not valid identifier");}
+			yyerror("not valid expression");}
 	return dest;
 }
 

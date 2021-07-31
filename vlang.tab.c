@@ -115,7 +115,7 @@ void converToString(int count, char* result);							/* convert int to string */
 expression printTerm(expression term);									/* print term */
 expression printExp(expression exp1, char* oper, expression exp2);		/* print expression */
 expression printVecExp(expression exp1, char* oper, expression exp2);	/* print only vector expression */
-expression printAssign(char* var, expression exp);						/* print assignment */
+expression printAssign(expression exp1, expression exp2);				/* print assignment */
 
 
 
@@ -404,7 +404,7 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  27
+#define YYFINAL  25
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   121
 
@@ -415,7 +415,7 @@ union yyalloc
 /* YYNRULES -- Number of rules.  */
 #define YYNRULES  32
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  63
+#define YYNSTATES  62
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
@@ -473,7 +473,7 @@ static const yytype_int8 yyrhs[] =
       27,     0,    -1,    28,    23,    -1,    27,    28,    23,    -1,
        6,    23,    -1,    27,     6,    23,    -1,    34,    23,    -1,
       27,    34,    23,    -1,    29,    23,    -1,    27,    29,    23,
-      -1,    30,    31,    -1,    27,    30,    31,    -1,     9,    13,
+      -1,    30,    31,    -1,    27,    30,    31,    -1,    32,    13,
       32,    -1,    32,    -1,     3,    32,    -1,     4,    32,    -1,
        5,    32,    -1,    24,    27,    25,    -1,    24,    25,    -1,
       33,    -1,    32,    15,    32,    -1,    32,    16,    32,    -1,
@@ -541,38 +541,38 @@ static const yytype_uint8 yyr2[] =
 static const yytype_uint8 yydefact[] =
 {
        0,     0,     0,     0,     0,     0,     0,    30,    28,    29,
-       0,     0,     0,     0,     0,    13,    19,     0,    30,    14,
-      15,    16,     4,    31,     0,     0,     0,     1,     0,     0,
-       0,     0,     0,     2,     8,     0,    10,     0,     0,     0,
-       0,     0,     0,     0,     6,    32,    12,    26,     5,     3,
-       9,    11,     7,    18,     0,    27,    20,    21,    22,    23,
-      24,    25,    17
+       0,     0,     0,     0,     0,    13,    19,     0,    14,    15,
+      16,     4,    31,     0,     0,     1,     0,     0,     0,     0,
+       0,     2,     8,     0,    10,     0,     0,     0,     0,     0,
+       0,     0,     0,     6,    32,    26,     5,     3,     9,    11,
+       7,    18,     0,    12,    27,    20,    21,    22,    23,    24,
+      25,    17
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,    11,    12,    13,    14,    36,    15,    16,    17
+      -1,    11,    12,    13,    14,    34,    15,    16,    17
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -22
+#define YYPACT_NINF -13
 static const yytype_int8 yypact[] =
 {
-      85,    -5,    -5,    -5,   -18,    -1,     0,    -3,   -22,   -22,
-      -5,    18,    -6,    -4,     4,    84,   -22,    15,   -22,    84,
-      84,    84,   -22,   -22,     5,    -5,    93,   -22,    19,    38,
-      41,     4,    52,   -22,   -22,    51,   -22,    -5,    -5,    -5,
-      -5,    -5,    -5,    -5,   -22,   -22,    84,   -22,   -22,   -22,
-     -22,   -22,   -22,   -22,    62,   101,    14,    14,    17,    17,
-     -22,   -22,   -22
+      79,    12,    12,    12,    -3,     8,    13,   -13,   -13,   -13,
+      12,    68,     2,     3,     5,    97,   -13,     4,    44,    44,
+      44,   -13,   -13,    20,    87,   -13,    19,    32,    42,     5,
+      46,   -13,   -13,     7,   -13,    12,    12,    12,    12,    12,
+      12,    12,    12,   -13,   -13,   -13,   -13,   -13,   -13,   -13,
+     -13,   -13,    45,    44,    77,   101,   101,   -12,   -12,   -13,
+     -13,   -13
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -22,   -21,   -11,   -10,    -9,     9,    10,   -22,    -8
+     -13,    -2,    -8,    -7,    -6,    14,    -1,   -13,    -5
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -582,35 +582,35 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-      29,    30,    31,    32,    18,    22,     8,     9,    23,    24,
-      25,    19,    20,    21,    54,    45,    10,    33,    27,    34,
-      26,     1,     2,     3,    28,     5,     6,     7,    35,     8,
-       9,    40,    41,    42,    43,    46,    42,    43,    44,    10,
-      51,     0,    48,    29,    30,    31,    32,    55,    56,    57,
-      58,    59,    60,    61,     1,     2,     3,     4,     5,     6,
-       7,    49,     8,     9,    50,     1,     2,     3,    28,     5,
-       6,     7,    10,     8,     9,    52,    53,     0,     0,     0,
-       0,     0,     0,    10,     0,     0,     0,    62,     1,     2,
-       3,     4,     5,     6,     7,     0,     8,     9,    37,    38,
-      39,    40,    41,    42,    43,     0,    10,    37,    38,    39,
-      40,    41,    42,    43,     0,    47,    38,    39,    40,    41,
-      42,    43
+      18,    19,    20,    27,    28,    29,    30,    41,    42,    24,
+       1,     2,     3,     4,     5,     6,     7,    22,     8,     9,
+      21,     7,    23,     8,     9,    31,    32,    43,    10,    33,
+      44,    52,    51,    10,    53,    54,    55,    56,    57,    58,
+      59,    60,    46,    49,    27,    28,    29,    30,     1,     2,
+       3,    26,     5,     6,     7,    47,     8,     9,    36,    37,
+      38,    39,    40,    41,    42,    48,    10,     0,    25,    50,
+      61,     1,     2,     3,    26,     5,     6,     7,     0,     8,
+       9,     0,     1,     2,     3,     4,     5,     6,     7,    10,
+       8,     9,    37,    38,    39,    40,    41,    42,     0,     0,
+      10,    36,    37,    38,    39,    40,    41,    42,     0,    45,
+      35,    36,    37,    38,    39,    40,    41,    42,    39,    40,
+      41,    42
 };
 
 static const yytype_int8 yycheck[] =
 {
-      11,    11,    11,    11,     9,    23,    11,    12,     9,     9,
-      13,     1,     2,     3,    35,    10,    21,    23,     0,    23,
-      10,     3,     4,     5,     6,     7,     8,     9,    24,    11,
-      12,    17,    18,    19,    20,    25,    19,    20,    23,    21,
-      31,    -1,    23,    54,    54,    54,    54,    37,    38,    39,
-      40,    41,    42,    43,     3,     4,     5,     6,     7,     8,
-       9,    23,    11,    12,    23,     3,     4,     5,     6,     7,
-       8,     9,    21,    11,    12,    23,    25,    -1,    -1,    -1,
-      -1,    -1,    -1,    21,    -1,    -1,    -1,    25,     3,     4,
-       5,     6,     7,     8,     9,    -1,    11,    12,    14,    15,
-      16,    17,    18,    19,    20,    -1,    21,    14,    15,    16,
-      17,    18,    19,    20,    -1,    22,    15,    16,    17,    18,
+       1,     2,     3,    11,    11,    11,    11,    19,    20,    10,
+       3,     4,     5,     6,     7,     8,     9,     9,    11,    12,
+      23,     9,     9,    11,    12,    23,    23,    23,    21,    24,
+      10,    33,    25,    21,    35,    36,    37,    38,    39,    40,
+      41,    42,    23,    29,    52,    52,    52,    52,     3,     4,
+       5,     6,     7,     8,     9,    23,    11,    12,    14,    15,
+      16,    17,    18,    19,    20,    23,    21,    -1,     0,    23,
+      25,     3,     4,     5,     6,     7,     8,     9,    -1,    11,
+      12,    -1,     3,     4,     5,     6,     7,     8,     9,    21,
+      11,    12,    15,    16,    17,    18,    19,    20,    -1,    -1,
+      21,    14,    15,    16,    17,    18,    19,    20,    -1,    22,
+      13,    14,    15,    16,    17,    18,    19,    20,    17,    18,
       19,    20
 };
 
@@ -619,12 +619,12 @@ static const yytype_int8 yycheck[] =
 static const yytype_uint8 yystos[] =
 {
        0,     3,     4,     5,     6,     7,     8,     9,    11,    12,
-      21,    27,    28,    29,    30,    32,    33,    34,     9,    32,
-      32,    32,    23,     9,     9,    13,    32,     0,     6,    28,
-      29,    30,    34,    23,    23,    24,    31,    14,    15,    16,
-      17,    18,    19,    20,    23,    10,    32,    22,    23,    23,
-      23,    31,    23,    25,    27,    32,    32,    32,    32,    32,
-      32,    32,    25
+      21,    27,    28,    29,    30,    32,    33,    34,    32,    32,
+      32,    23,     9,     9,    32,     0,     6,    28,    29,    30,
+      34,    23,    23,    24,    31,    13,    14,    15,    16,    17,
+      18,    19,    20,    23,    10,    22,    23,    23,    23,    31,
+      23,    25,    27,    32,    32,    32,    32,    32,    32,    32,
+      32,    25
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1509,7 +1509,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 96 "vlang.y"
-    {(yyval.expr) = printAssign((yyvsp[(1) - (3)].vName), (yyvsp[(3) - (3)].expr));;}
+    {(yyval.expr) = printAssign((yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr));;}
     break;
 
   case 13:
@@ -1991,45 +1991,35 @@ expression printTerm(expression term){
 }
 
 /* print assignment */
-expression printAssign(char* var, expression exp){
-	/* possible assignments: s=s v=constV v=v v=s v=constS */
-	expression dest;
-	int sIndex = variablesIndex(var, GET);
-    if(sIndex == -1) {
-        yyerror("variable not initialized");}
-	/* update returned expression */
-	dest.type = symbols[sIndex].type;
-	dest.indx = sIndex;
-	dest.ecounter = -1;
+expression printAssign(expression exp1, expression exp2){
+	/* possible assignments for variables: s=s s=constS v=constV v=v v=s v=constS */
 	
-	if(symbols[sIndex].type == scalar){			/* scalar handling */
-		if(exp.type == scalar){
-			fprintf(yyout, "\t%s = %s;\n", symbols[sIndex].name, symbols[exp.indx].name);
-		}else if(exp.type == coScalar){
-			fprintf(yyout, "\t%s = e%d;\n", symbols[sIndex].name, exp.ecounter);
+	/* update returned expression */
+	expression dest;
+	dest.indx = exp1.indx;
+	dest.size = exp1.size;
+	strcpy(dest.name, exp1.name);
+	dest.type = exp1.type;
+	dest.ecounter = exp1.ecounter;
+	
+	if(exp1.type == scalar || exp1.type == coScalar){			/* scalar handling */
+		if(exp2.type == scalar || exp2.type == coScalar){
+			fprintf(yyout, "\t%s = %s;\n", exp1.name, exp2.name);
 		}else{
 			yyerror("scalar can't be equal to vector");}
-	}else if(symbols[sIndex].type == vector){	/* vector handling */
-		if(exp.type == scalar){
-			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout, "\t\t%s[i] = %s;\n\t}\n", symbols[sIndex].name, symbols[exp.indx].name);
-		}else if(exp.type == coScalar){
-			fprintf(yyout,"\tfor(int i = 0; i < %d; i++){\n", symbols[sIndex].size);
-			fprintf(yyout,"\t\t%s[i] = e%d;\n\t}\n", symbols[sIndex].name, exp.ecounter);
-		}else if(exp.type == vector){
-			if(symbols[sIndex].size == symbols[exp.indx].size){
-				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", symbols[sIndex].name, symbols[exp.indx].name, symbols[sIndex].name);
-			}else{
-				yyerror("can't assigned different sizes");}
-		}else if(exp.type == coVector){
-			if(symbols[sIndex].size == exp.size){
-				fprintf(yyout,"\tmemcpy(%s, e%d, sizeof(%s));\n", symbols[sIndex].name, exp.ecounter, symbols[sIndex].name);
+	}else if(exp1.type == vector || exp1.type == coVector){				/* vector handling */
+		if(exp2.type == scalar || exp2.type == coScalar){
+			fprintf(yyout, "\tfor(int i = 0; i < %d; i++){\n", exp1.size);
+			fprintf(yyout, "\t\t%s[i] = %s;\n\t}\n", exp1.name, exp2.name);
+		}else if(exp2.type == vector || exp2.type == coVector){
+			if(exp1.size == exp2.size){
+				fprintf(yyout,"\tmemcpy(%s, %s, sizeof(%s));\n", exp1.name, exp2.name, exp1.name);
 			}else{
 				yyerror("can't assigned different sizes");}
 		}else{
 			yyerror("wrong input when assigned vector");}	
 	}else{										/* error */
-			yyerror("not valid identifier");}
+			yyerror("not valid expression");}
 	return dest;
 }
 
@@ -2113,7 +2103,7 @@ expression printVecExp(expression exp1, char* oper, expression exp2){
 void printPrintStat(expression exp){
 	
 	if(expArray > 1){
-		for(int i=0; i < expArray - 1; i++){printPrint(commaArray[i], 0); fprintf(yyout,"\tprintf(\" : \");\n");}
+		for(int i=0; i < expArray - 1; i++){printPrint(commaArray[i], 0); fprintf(yyout,"\tprintf(\": \");\n");}
 		printPrint(commaArray[expArray - 1], 1);
 	}else{
 		printPrint(exp, 1);
@@ -2128,8 +2118,6 @@ void printPrint(expression exp, int enter){
 		fprintf(yyout,"\tprintf(\"[\");\n");
 		fprintf(yyout,"\tfor(int i = 0; i < %d - 1; i++){\n", exp.size);
 		fprintf(yyout,"\t\tprintf(\"%%d,\",%s[i]);\n\t}\n\tprintf(\"%%d\", %s[%d - 1]);\n", exp.name, exp.name, exp.size);
-		// if(exp.type == vector){fprintf(yyout,"\t\tprintf(\"%%d,\", %s[i]);\n\t}\n\tprintf(\"%%d\", %s[%d - 1]);\n", symbols[exp.indx].name, symbols[exp.indx].name, exp.size);}
-		// if(exp.type == coVector){fprintf(yyout,"\t\tprintf(\"%%d,\",e%d[i]);\n\t}\n\tprintf(\"%%d\", e%d[%d - 1]);\n", exp.ecounter, exp.ecounter, exp.size);}
 		if(enter == 0){fprintf(yyout,"\tprintf(\"]\");\n");}
 		else if(enter == 1){fprintf(yyout,"\tprintf(\"]\\n\");\n");}
 
@@ -2137,9 +2125,6 @@ void printPrint(expression exp, int enter){
 		if(enter == 0){fprintf(yyout,"\tprintf(\"%%d\", %s);\n",  exp.name);}
 		else if(enter == 1){fprintf(yyout,"\tprintf(\"%%d\\n\", %s);\n",  exp.name);}
 	}
-	// else if(exp.type == coScalar){
-	// 	fprintf(yyout,"\tprintf(\"%%d\\n\", e%d);\n", exp.ecounter);
-	// }
 }
 
 /* handle exp, exp statement */
